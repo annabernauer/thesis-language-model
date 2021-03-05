@@ -1,2 +1,15 @@
 *.class
 *.log
+*.iml
+.idea/
+.settings/
+target/
+.cache-tests
+.cache-main
+dependency-reduced-pom.xml
+/bin/
+/db_cluster/
+.vagrant/
+.g8/
+.project
+.classpath

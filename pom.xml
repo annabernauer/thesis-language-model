@@ -1,0 +1,197 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mailytica.ai</groupId>
+    <artifactId>thesis-language-model</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+	<modules>
+        <module>n-gram-language-model</module>
+    </modules>
+	
+    <profiles>
+        <profile>
+            <id>integration</id>
+            <properties>
+                <test-suffixes>**/*SpecIntegration.*</test-suffixes>
+            </properties>
+        </profile>
+    </profiles>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalaz</groupId>
+            <artifactId>scalaz-core_${scala.compat.version}</artifactId>
+            <version>${scalaz.version}</version>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scalactic</groupId>
+            <artifactId>scalactic_${scala.compat.version}</artifactId>
+            <version>${scala-test.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.compat.version}</artifactId>
+            <version>${scala-test.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scalamock</groupId>
+            <artifactId>scalamock_${scala.compat.version}</artifactId>
+            <version>${scala-mock-version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!--<finalName>${project.artifactId}-${project.version}-${timestamp}</finalName> -->
+        <plugins>
+
+            <!-- Maven Scala Plugin -->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <args>
+                                <arg>-dependencyfile</arg>
+                                <arg>${project.build.directory}/.scala_dependencies</arg>
+                                <arg>-target:jvm-1.8</arg>
+                            </args>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Surefire Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18.1</version>
+                <configuration>
+                    <useFile>false</useFile>
+                    <disableXmlReport>true</disableXmlReport>
+                    <!-- If you have classpath issue like NoDefClassError,... -->
+                    <!-- useManifestOnlyJar>false</useManifestOnlyJar -->
+                    <includes>
+                        <include>${test-suffixes}</include>
+                    </includes>
+                    <!--
+                    <parallel>classes</parallel>
+                    <threadCount>3</threadCount>
+                    -->
+                </configuration>
+            </plugin>
+
+            <!-- Maven Jar Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <properties>
+
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+
+        <test-suffixes>**/*Spec.*</test-suffixes>
+
+        <!--
+        <timestamp>${maven.build.timestamp}</timestamp>
+        <maven.build.timestamp.format>yyyy_MM_dd_HH_mm</maven.build.timestamp.format>
+        -->
+
+        <!-- Scala -->
+        <scala.version>2.11.12</scala.version>
+        <scala.compat.version>2.11</scala.compat.version>
+        <scala-test.version>3.0.4</scala-test.version>
+        <scala-mock-version>4.0.0</scala-mock-version>
+
+        <!-- Spark -->
+        <spark-version>2.4.7</spark-version>
+        <spark-nlp-version>2.3.4</spark-nlp-version>
+
+        <!-- Logging -->
+        <slf4j-version>1.7.25</slf4j-version>
+
+        <!-- Others -->
+        <jsuereth-version>2.0</jsuereth-version> <!-- resource management -->
+        <akka-version>2.5.12</akka-version>
+        <scalaz.version>7.3.0-M31</scalaz.version>
+        <commons-csv-version>1.8</commons-csv-version> <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
+        <javax.mail.version>1.6.2</javax.mail.version> <!-- https://mvnrepository.com/artifact/com.sun.mail/javax.mail -->
+        <jsoup-version>1.12.2</jsoup-version> <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+        <commons-email-version>1.5</commons-email-version> <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-email -->
+
+    </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>internal</id>
+            <url>file://H:/development/mailytica-artifacts</url>
+        </repository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>github-mailytica-artifacts</id>
+            <url>https://raw.githubusercontent.com/lorenz-nlp/mailytica-artifacts/master</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+</project>
