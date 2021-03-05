@@ -158,7 +158,7 @@
 
         <!-- Spark -->
         <spark-version>2.4.7</spark-version>
-        <spark-nlp-version>2.3.4</spark-nlp-version>
+        <spark-nlp-version>2.7.4</spark-nlp-version>
 
         <!-- Logging -->
         <slf4j-version>1.7.25</slf4j-version>

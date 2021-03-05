@@ -17,5 +17,26 @@
 
     <dependencies>
 
+        <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.compat.version}</artifactId>
+            <version>${spark-version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_${scala.compat.version}</artifactId>
+            <version>${spark-version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.johnsnowlabs.nlp/spark-nlp -->
+        <dependency>
+            <groupId>com.johnsnowlabs.nlp</groupId>
+            <artifactId>spark-nlp_2.11</artifactId>
+            <version>${spark-nlp-version}</version>
+        </dependency>
+
     </dependencies>
 </project>
