@@ -1,6 +1,6 @@
-package com.mailytica.thesis.language.model.ngram.regexDemo
+package com.mailytica.thesis.language.model.ngram.matching
 
-import com.mailytica.thesis.language.model.ngram.Annotator.WordLengthMatcherModel
+import com.mailytica.thesis.language.model.ngram.annotator.WordLengthMatcherModel
 import org.apache.spark.ml.PipelineStage
 
 object WordLengthMatching extends AbstractMatching {

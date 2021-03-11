@@ -1,8 +1,8 @@
-package com.mailytica.thesis.language.model.ngram.regexDemo
+package com.mailytica.thesis.language.model.ngram.matching
 
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
-import com.mailytica.thesis.language.model.ngram.regexDemo.WordLengthMatching.{getGeneralStages, getSpecificStages}
+import com.mailytica.thesis.language.model.ngram.matching.WordLengthMatching.{getGeneralStages, getSpecificStages}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.scalatest.{Matchers, WordSpec}
 

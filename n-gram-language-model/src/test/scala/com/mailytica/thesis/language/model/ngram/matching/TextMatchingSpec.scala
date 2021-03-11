@@ -1,12 +1,12 @@
-package com.mailytica.thesis.language.model.ngram.regexDemo
+package com.mailytica.thesis.language.model.ngram.matching
 
-import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
-import com.mailytica.thesis.language.model.ngram.regexDemo.RegexMatching.{getSpecificStages, getGeneralStages}
+import com.johnsnowlabs.nlp.util.io.ResourceHelper
+import com.mailytica.thesis.language.model.ngram.matching.TextMatching.{getGeneralStages, getSpecificStages}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.scalatest.{Matchers, WordSpec}
 
-class RegexMatchingSpec extends WordSpec with Matchers {
+class TextMatchingSpec extends WordSpec with Matchers{
 
   "A text" when {
     ResourceHelper.spark
@@ -21,14 +21,14 @@ class RegexMatchingSpec extends WordSpec with Matchers {
 
     "has matches" should {
 
-      val textWithMatches = """Quantum test test million hundred test"""
+      val textWithMatches = """Quantum test million hundred test"""
 
       val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(textWithMatches)
       annotated.foreach(println)
 
       "have the correct entries" in {
-        annotated("matchedText").head.result should be("Quantum test")
-        annotated("matchedText").last.result should be("million hundred")
+        annotated("matchedText").head.result should be("Quantum")
+        annotated("matchedText").last.result should be("million")
         annotated("matchedText").size should be(2)
       }
     }

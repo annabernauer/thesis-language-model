@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.ngram.regexDemo
+package com.mailytica.thesis.language.model.ngram.matching
 
 import java.io.{BufferedWriter, File, FileWriter}
 
