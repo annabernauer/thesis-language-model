@@ -23,12 +23,12 @@ class TextMatchingSpec extends WordSpec with Matchers{
 
       val textWithMatches = """Quantum test million hundred test"""
 
-      val annotated: Map[String, Seq[String]] = new LightPipeline(pipelineModel).annotate(textWithMatches)
+      val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(textWithMatches)
       annotated.foreach(println)
 
       "have the correct entries" in {
-        annotated("matchedText").head should be("Quantum")
-        annotated("matchedText").last should be("million")
+        annotated("matchedText").head.result should be("Quantum")
+        annotated("matchedText").last.result should be("million")
         annotated("matchedText").size should be(2)
       }
     }

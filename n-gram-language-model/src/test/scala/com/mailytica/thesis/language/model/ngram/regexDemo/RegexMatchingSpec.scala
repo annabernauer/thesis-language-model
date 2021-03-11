@@ -21,14 +21,14 @@ class RegexMatchingSpec extends WordSpec with Matchers {
 
     "has matches" should {
 
-      val textWithMatches = """Quantum test million hundred test"""
+      val textWithMatches = """Quantum test test million hundred test"""
 
-      val annotated: Map[String, Seq[String]] = new LightPipeline(pipelineModel).annotate(textWithMatches)
+      val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(textWithMatches)
       annotated.foreach(println)
 
       "have the correct entries" in {
-        annotated("matchedText").head should be("Quantum test")
-        annotated("matchedText").last should be("million hundred")
+        annotated("matchedText").head.result should be("Quantum test")
+        annotated("matchedText").last.result should be("million hundred")
         annotated("matchedText").size should be(2)
       }
     }
