@@ -2,10 +2,13 @@ package com.mailytica.thesis.language.model.ngram.matching
 
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
-import com.mailytica.thesis.language.model.ngram.matching.RegexMatching.{getSpecificStages, getGeneralStages}
+import com.mailytica.thesis.language.model.ngram.matching.RegexMatching.{getGeneralStages, getSpecificStages}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpec}
 
+@RunWith(classOf[JUnitRunner])
 class RegexMatchingSpec extends WordSpec with Matchers {
 
   "A text" when {
@@ -27,9 +30,9 @@ class RegexMatchingSpec extends WordSpec with Matchers {
       annotated.foreach(println)
 
       "have the correct entries" in {
-        annotated("matchedText").head.result should be("Quantum test")
-        annotated("matchedText").last.result should be("million hundred")
-        annotated("matchedText").size should be(2)
+        annotated("regex").head.result should be("Quantum test")
+        annotated("regex").last.result should be("million hundred")
+        annotated("regex").size should be(2)
       }
     }
     "has no matches" should {
@@ -41,7 +44,7 @@ class RegexMatchingSpec extends WordSpec with Matchers {
       annotated.foreach(println)
 
       "have size 0" in {
-        annotated.get("matchedText").head.size should be(0)
+        annotated.get("regex").head.size should be(0)
       }
     }
 
@@ -54,7 +57,7 @@ class RegexMatchingSpec extends WordSpec with Matchers {
       annotated.foreach(println)
 
       "have size 0" in {
-        annotated.get("matchedText").head.size should be(0)
+        annotated.get("regex").head.size should be(0)
       }
     }
   }

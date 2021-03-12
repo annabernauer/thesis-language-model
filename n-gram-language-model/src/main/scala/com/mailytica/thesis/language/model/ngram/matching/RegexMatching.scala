@@ -12,7 +12,7 @@ object RegexMatching extends AbstractMatching {
 
     val regexMatcherModel = new RegexMatcherModel()
       .setInputCols("document")
-      .setOutputCol("matchedText")
+      .setOutputCol("regex")
       .setRules(stringArrayToTupelArray(regexRules))
       .setStrategy("MATCH_ALL")
 

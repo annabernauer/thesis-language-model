@@ -4,9 +4,11 @@ import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.mailytica.thesis.language.model.ngram.matching.WordLengthMatching.{getGeneralStages, getSpecificStages}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpec}
 
-
+@RunWith(classOf[JUnitRunner])
 class WordLengthMatchingSpec extends WordSpec with Matchers {
 
   "A text" when {
@@ -28,9 +30,9 @@ class WordLengthMatchingSpec extends WordSpec with Matchers {
       annotated.foreach(println)
 
       "have the correct entries" in {
-        annotated("matchedText").head.result should be("Quantum")
-        annotated("matchedText").last.result should be("12345")
-        annotated("matchedText").size should be(4)
+        annotated("filteredWordsByLength").head.result should be("Quantum")
+        annotated("filteredWordsByLength").last.result should be("12345")
+        annotated("filteredWordsByLength").size should be(4)
       }
     }
   }

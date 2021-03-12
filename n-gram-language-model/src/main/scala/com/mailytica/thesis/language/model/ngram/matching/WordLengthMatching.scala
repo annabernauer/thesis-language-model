@@ -8,7 +8,7 @@ object WordLengthMatching extends AbstractMatching {
   override def getSpecificStages(): Array[_ <: PipelineStage] = {
     val wordLengthMatcherModel = new WordLengthMatcherModel()
       .setInputCols("token")
-      .setOutputCol("matchedText")
+      .setOutputCol("filteredWordsByLength")
 
     Array(wordLengthMatcherModel)
   }

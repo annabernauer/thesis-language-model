@@ -4,8 +4,11 @@ import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.mailytica.thesis.language.model.ngram.matching.TextMatching.{getGeneralStages, getSpecificStages}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpec}
 
+//@RunWith(classOf[JUnitRunner])
 class TextMatchingSpec extends WordSpec with Matchers{
 
   "A text" when {
