@@ -1,12 +1,10 @@
 package com.mailytica.thesis.language.model.ngram.annotator
 
-import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, DOCUMENT, TOKEN}
-import com.johnsnowlabs.nlp.annotator.{NGramGenerator, Tokenizer}
-import com.johnsnowlabs.nlp.serialization.MapFeature
-import com.johnsnowlabs.nlp.util.io.ResourceHelper
-import com.johnsnowlabs.nlp.{Annotation, AnnotatorApproach, DocumentAssembler, LightPipeline}
+import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
+import com.johnsnowlabs.nlp.annotator.NGramGenerator
+import com.johnsnowlabs.nlp.{Annotation, AnnotatorApproach}
+import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.param.Param
-import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Dataset
 
@@ -19,8 +17,6 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
   val n: Param[Int] = new Param(this, "n", "")
 
   def setN(value: Int): this.type = set(this.n, value)
-
-  def getN: Int = $(n)
 
   setDefault(this.n, 3)
 
@@ -35,8 +31,8 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
       .collect()
       .toSeq
 
-    val histories: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, getN - 1)
-    val sequences: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, getN)
+    val histories: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n) - 1)
+    val sequences: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n))
 
     val historiesMap: Map[String, Int] = getCountedMap(histories)
     val sequencesMap: Map[String, Int] = getCountedMap(sequences)

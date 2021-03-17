@@ -1,13 +1,11 @@
 package com.mailytica.thesis.language.model.ngram.annotator
 
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
-import com.johnsnowlabs.nlp.annotator.{NGramGenerator, Tokenizer}
+import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.serialization.MapFeature
-import com.johnsnowlabs.nlp.util.io.ResourceHelper
-import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel, DocumentAssembler, LightPipeline}
+import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
-import org.apache.spark.ml.{Pipeline, PipelineModel}
 
 import scala.util.Try
 
@@ -20,8 +18,6 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
   val n: Param[Int] = new Param(this, "n", "")
 
   def setN(value: Int): this.type = set(this.n, value)
-
-  def getN: Int = $(n)
 
   def setHistories(value: Map[String, Int]): this.type = set(histories, value)
 
@@ -36,7 +32,7 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
 
     val dictionary: Set[String] = Set("million", "Quantum", "test")
 
-    val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, getN - 1)
+    val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n) - 1)
 
     def calculateTokenWithLMaxLikelihood(ngram: Annotation): Option[String] = {
 

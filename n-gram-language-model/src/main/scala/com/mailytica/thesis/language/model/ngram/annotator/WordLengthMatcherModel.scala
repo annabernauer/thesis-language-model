@@ -1,16 +1,15 @@
 package com.mailytica.thesis.language.model.ngram.annotator
 
-import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, DOCUMENT, TOKEN}
-import com.johnsnowlabs.nlp.annotators.NGramGenerator
+import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel, AnnotatorType}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 
 class WordLengthMatcherModel(override val uid: String) extends AnnotatorModel[WordLengthMatcherModel]{
 
-  override val outputAnnotatorType: AnnotatorType = TOKEN
-
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
+
+  override val outputAnnotatorType: AnnotatorType = TOKEN
 
   def this() = this(Identifiable.randomUID("WORD_LENGTH_MATCHER"))
 

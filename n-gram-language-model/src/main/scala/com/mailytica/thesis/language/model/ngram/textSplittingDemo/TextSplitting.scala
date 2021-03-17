@@ -19,16 +19,6 @@ object TextSplitting extends App {
 
   import sparkSession.implicits._
 
-  //  val data = Seq("Born and raised in the Austrian Empire, Tesla studied engineering and physics in the
-  //  1870s without receiving a degree, and gained practical experience in the early 1880s working in
-  //  telephony and at Continental Edison in the new electric power industry. In 1884 he emigrated to the
-  //  United States, where he became a naturalized citizen. He worked for a short time at the Edison Machine
-  //  Works in New York City before he struck out on his own. With the help of partners to finance and
-  //  market his ideas, Tesla set up laboratories and companies in New York to develop a range of electrical
-  //  and mechanical devices. His alternating current (AC) induction motor and related polyphase AC patents,
-  //  licensed by Westinghouse Electric in 1888, earned him a considerable amount of money and became the
-  //  cornerstone of the polyphase system which that company eventually marketed.").toDF("text")
-
   val data = Seq("Test. data", "testing Data2 1/12/20 last wednesday the day before next thursday").toDF("text")
   data.show()
 

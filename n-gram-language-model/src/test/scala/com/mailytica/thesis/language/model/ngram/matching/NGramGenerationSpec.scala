@@ -26,7 +26,6 @@ class NGramGenerationSpec extends WordSpec with Matchers {
 
       val textWithMatches = """Quantum test million"""
 
-
       val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(textWithMatches)
       annotated.foreach(println)
 
