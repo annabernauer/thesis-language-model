@@ -4,32 +4,54 @@ import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.mailytica.thesis.language.model.ngram.matching.NGramProbability.{getGeneralStages, getSpecificStages}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpec}
 
+@RunWith(classOf[JUnitRunner])
 class NGramProbabilitySpec extends WordSpec with Matchers {
-  ResourceHelper.spark
 
-  import ResourceHelper.spark.implicits._
+  "A text" when {
+    ResourceHelper.spark
 
-  val nlpPipeline = new Pipeline()
+    import ResourceHelper.spark.implicits._
 
-  val textWithMatches = """Quantum test million test million Quantum test million test Quantum test million"""
+    val nlpPipeline = new Pipeline()
 
-  nlpPipeline.setStages(getGeneralStages() ++ getSpecificStages())
+    val textWithMatches = """Quantum test million test million Quantum test million test Quantum test million"""
 
-  val pipelineModel: PipelineModel = nlpPipeline.fit(Seq(textWithMatches).toDF("text"))
+    nlpPipeline.setStages(getGeneralStages() ++ getSpecificStages())
 
-  "has matches" should {
+    val pipelineModel: PipelineModel = nlpPipeline.fit(Seq(textWithMatches).toDF("text"))
 
-    val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(textWithMatches)
+    "has entries" should {
 
-    print("\nin Testclass\n")
-    annotated.foreach(println)
+      val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(textWithMatches)
 
-    "have the correct entries" in {
-      annotated("ngramsProbability").head.result should be("test")
-//      annotated("ngrams").last.result should be("test_million")
-//      annotated("ngrams").size should be(5)
+      print("\nin Testclass\n")
+      annotated.foreach(println)
+
+      "have a prediction" in {
+
+        val annotation = annotated("ngramsProbability").head
+        annotation.result should be("test")
+        annotation.end - annotation.begin should be(4)
+
+        annotation.metadata.getOrElse("probability", "no probability") should be("0.5")
+
+      }
     }
+
+    "has no entries" should {
+
+      val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate("")
+
+      "have empty columns" in {
+
+        annotated("ngramsProbability").isEmpty should be (true)
+
+      }
+    }
+
   }
 }

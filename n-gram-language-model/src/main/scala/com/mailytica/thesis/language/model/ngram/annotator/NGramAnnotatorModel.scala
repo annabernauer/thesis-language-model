@@ -2,7 +2,7 @@ package com.mailytica.thesis.language.model.ngram.annotator
 
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
-import com.johnsnowlabs.nlp.serialization.MapFeature
+import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
@@ -13,28 +13,33 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
 
   def this() = this(Identifiable.randomUID("NGRAM"))
 
+  override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
+
+  override val outputAnnotatorType: AnnotatorType = TOKEN
+
   val histories: MapFeature[String, Int] = new MapFeature(this, "histories")
+
   val sequences: MapFeature[String, Int] = new MapFeature(this, "sequences")
+
+  val dictionary: SetFeature[String] = new SetFeature(this, "dictionary")
+
   val n: Param[Int] = new Param(this, "n", "")
 
-  def setN(value: Int): this.type = set(this.n, value)
 
   def setHistories(value: Map[String, Int]): this.type = set(histories, value)
 
   def setSequences(value: Map[String, Int]): this.type = set(sequences, value)
 
+  def setDictionary(value: Set[String]): this.type = set(dictionary, value)
+
+  def setN(value: Int): this.type = set(this.n, value)
+
   setDefault(this.n, 3)
 
-  override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
-  override val outputAnnotatorType: AnnotatorType = CHUNK
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
-    val dictionary: Set[String] = Set("million", "Quantum", "test")
-
-    val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n) - 1)
-
-    def calculateTokenWithLMaxLikelihood(ngram: Annotation): Option[String] = {
+    def calculateTokenWithLMaxLikelihood(ngram: Annotation): Option[(String, Double)] = {
 
       def getTokenWithLikelihood(token: String): (String, Double) = {
 
@@ -45,21 +50,37 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
         (token, likelihood)
       }
 
-      dictionary
+      $$(dictionary)
         .toSeq
         .map { token => getTokenWithLikelihood(token) }
         .sortBy { case (token, likelihood) => likelihood }
         .lastOption
-        .map { case (token, likelihood) => token }
 
     }
 
-    val tokenWithMaxLikelihood: String = nGrams
+    val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n) - 1)
+
+    val tokenWithMaxLikelihood: Option[(String, Double)] = nGrams
       .lastOption
       .flatMap(ngram => calculateTokenWithLMaxLikelihood(ngram))
-      .getOrElse("noStringFound")
 
-    Seq(Annotation(TOKEN, 0, tokenWithMaxLikelihood.length, tokenWithMaxLikelihood, Map((""->"")), Array(1F)))
+    val (lastTokenEnd: Int, lastTokenSentence: String) =
+      annotations.lastOption match {
+        case Some(annotation) => (annotation.end + 2, annotation.metadata.getOrElse("sentence", "0"))
+        case None => (0, "0")
+      }
+
+    tokenWithMaxLikelihood match {
+      case Some((tokenContent, tokenProbability)) =>
+        Seq(Annotation(
+          TOKEN,
+          lastTokenEnd,
+          lastTokenEnd + tokenContent.length,
+          tokenContent,
+          Map("probability" -> tokenProbability.toString, "sentence" -> lastTokenSentence))
+        )
+      case None => Seq.empty
+    }
   }
 
 

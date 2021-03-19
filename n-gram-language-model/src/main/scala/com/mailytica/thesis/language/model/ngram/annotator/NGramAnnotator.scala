@@ -12,7 +12,7 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
 
 
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
-  override val outputAnnotatorType: AnnotatorType = CHUNK
+  override val outputAnnotatorType: AnnotatorType = TOKEN
 
   val n: Param[Int] = new Param(this, "n", "")
 
@@ -23,6 +23,7 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
   def this() = this(Identifiable.randomUID("NGRAM_ANNOTATOR"))
 
   override def train(dataset: Dataset[_], recursivePipeline: Option[PipelineModel]): NGramAnnotatorModel = {
+
     import dataset.sparkSession.implicits._
 
     val tokensPerDocuments: Seq[Array[Annotation]] = dataset
@@ -30,6 +31,8 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
       .as[Array[Annotation]]
       .collect()
       .toSeq
+
+    val dictionary: Set[String] = tokensPerDocuments.flatMap(tokens => tokens.map(token => token.result)).toSet
 
     val histories: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n) - 1)
     val sequences: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n))
@@ -41,6 +44,7 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
       .setHistories(historiesMap)
       .setSequences(sequencesMap)
       .setN($(n))
+      .setDictionary(dictionary)
   }
 
   def getCountedMap(sequence: Seq[Annotation]) = {
