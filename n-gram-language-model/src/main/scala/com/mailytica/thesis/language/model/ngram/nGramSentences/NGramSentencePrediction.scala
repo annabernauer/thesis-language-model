@@ -29,6 +29,7 @@ object NGramSentencePrediction {
     val nGramSentenceAnnotator = new NGramSentenceAnnotator()
       .setInputCols("token")
       .setOutputCol("sentencePrediction")
+      .setN(3)
 
     Array(documentAssembler, sentenceSplitter, markedSentenceEnds, tokenizer, nGramSentenceAnnotator)
   }

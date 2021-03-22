@@ -1,8 +1,11 @@
 package com.mailytica.thesis.language.model.ngram.annotator
 
+import java.io.{BufferedWriter, File, FileWriter}
+
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorApproach}
+import org.apache.commons.io.FileUtils
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
@@ -32,13 +35,32 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
       .collect()
       .toSeq
 
-    val dictionary: Set[String] = tokensPerDocuments.flatMap(tokens => tokens.map(token => token.result)).toSet
+    val dictionary: Set[String] = tokensPerDocuments
+      .flatten
+      .map(token => token.result)
+      .toSet
 
     val histories: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n) - 1)
     val sequences: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n))
 
     val historiesMap: Map[String, Int] = getCountedMap(histories)
     val sequencesMap: Map[String, Int] = getCountedMap(sequences)
+
+    val file : File = new File("n-gram-language-model\\target\\sentencePrediction\\")
+    FileUtils.deleteQuietly(file)
+    if (!file.exists) {
+      file.mkdir
+    }
+
+    printToFile(new File("n-gram-language-model\\target\\sentencePrediction\\dictionary.txt")) { p =>
+      dictionary.foreach(p.println)
+    }
+    printToFile(new File("n-gram-language-model\\target\\sentencePrediction\\historiesMap.txt")) { p =>
+      historiesMap.foreach(p.println)
+    }
+    printToFile(new File("n-gram-language-model\\target\\sentencePrediction\\sequencesMap.txt")) { p =>
+      sequencesMap.foreach(p.println)
+    }
 
     new NGramAnnotatorModel()
       .setHistories(historiesMap)
@@ -64,6 +86,11 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
     tokensPerDocuments.flatMap { tokens =>
       nGramModel.annotate(tokens)
     }
+  }
+
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try { op(p) } finally { p.close() }
   }
 
   override val description: String = "NGrammAnnotator"

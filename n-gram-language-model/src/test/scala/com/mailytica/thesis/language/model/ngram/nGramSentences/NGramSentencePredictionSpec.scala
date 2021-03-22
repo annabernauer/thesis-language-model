@@ -35,21 +35,11 @@ class NGramSentencePredictionSpec extends WordSpec with Matchers {
           print("\nin Testclass\n")
           annotated("sentencePrediction").foreach(println)
 
-          annotated("sentencePrediction").last.result should be("<SENTENCE_END>")
           annotated("sentencePrediction")(12).result should be("million")
+          annotated("sentencePrediction")(13).result should be(".")
 
         }
 
-        "have flagged ends of the sentences" in {
-
-
-          val annotation = annotated("sentencesWithFlaggedEnds").head
-          annotation.end - annotation.begin should be("Quantum test million <SENTENCE_END>".length)
-
-          val annotation2 = annotated("sentencesWithFlaggedEnds")(1)
-          annotation2.end - annotation2.begin should be("million Quantum test million <SENTENCE_END>".length)
-
-        }
       }
 
       "have empty columns" in {

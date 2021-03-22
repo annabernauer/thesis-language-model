@@ -27,11 +27,26 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
 
   setDefault(this.n, 3)
 
+  // document -> sentence -> token -> ngramannotatorSentenceModel ( ngram -> ngramAnnotatorModel( -> prediction next token) -> predicion sentence)
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
     @tailrec
     def loop(joinedAnnotations: Seq[Annotation], count: Int = 0): Seq[Annotation] = {
+
+//      joinedAnnotations
+//        .lastOption
+//        .map( token => token.result)
+//        .map{
+//          case SENTENCE_END => joinedAnnotations
+//          case _ => count match {
+//            case 10 => joinedAnnotations
+//            case _ => {
+//              loop(joinedAnnotations ++ $(nGramAnnotatorModel).annotate(joinedAnnotations), count + 1)
+//            }
+//          }
+//        }
+//        .getOrElse(Seq.empty)
 
       joinedAnnotations.lastOption match {
         case Some(annotation) =>
@@ -39,7 +54,7 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
             case SENTENCE_END => joinedAnnotations
             case _ => {
               count match {
-                case 10 => joinedAnnotations
+                case 50 => joinedAnnotations
                 case _ => {
                   loop(joinedAnnotations ++ $(nGramAnnotatorModel).annotate(joinedAnnotations), count + 1)
                 }
@@ -50,7 +65,7 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
       }
     }
 
-    loop(annotations)
+    loop(annotations).filterNot(token => token.result =="<SENTENCE_END>")
 
   }
 

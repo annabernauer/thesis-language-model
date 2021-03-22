@@ -17,32 +17,19 @@ class SentenceEndMarker(override val uid: String) extends AnnotatorModel[NGramGe
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
-    //        annotations.map(annotation =>
-    //          Annotation(annotation.annotatorType, annotation.begin, annotation.`end` + SENTENCE_END.length -1 , annotation.result.replace(".", SENTENCE_END), annotation.metadata, annotation.embeddings))
+    val b = new StringBuilder()
 
-    def loop(annotationResult: Seq[Annotation], position: Int = 0, index: Int = 0): Seq[Annotation] = {
+//    SENTENCE_END ++ annotations.headOption
 
-      if (annotations.length <= index) {
-        return annotationResult
-      }
+    annotations.map{ sentence =>
 
-      val annotation = annotations(index)
-      val tokenLength = annotation.result.length + SENTENCE_END.length - 1
+      val result = sentence.result.replace(".", "." + SENTENCE_END)
 
-      loop(
-        annotationResult ++ Seq(Annotation(
-          annotation.annotatorType,
-          position,
-          position + tokenLength,
-          annotation.result.replace(".", SENTENCE_END),
-          annotation.metadata,
-          annotation.embeddings)),
-        position + tokenLength + 2,
-        index + 1)
+      sentence.copy(
+
+        result = result
+      )
     }
-
-    loop(Seq.empty)
-
   }
 
 }

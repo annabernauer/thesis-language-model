@@ -1,5 +1,7 @@
 package com.mailytica.thesis.language.model.ngram.annotator
 
+import java.io.File
+
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
@@ -46,14 +48,19 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
         val likelihood: Double = Try {
           $$(sequences).getOrElse[Int](s"${ngram.result} $token", 0).toDouble / $$(histories).getOrElse[Int](ngram.result, 0).toDouble
         }.getOrElse(0.0)
-
         (token, likelihood)
       }
 
-      $$(dictionary)
-        .toSeq
+      val tokensWithLikelihood : Seq[(String, Double)] = $$(dictionary)
+        .toSeq // needs to be done for sorting
         .map { token => getTokenWithLikelihood(token) }
         .sortBy { case (token, likelihood) => likelihood }
+
+      printToFile(new File(s"n-gram-language-model\\target\\sentencePrediction\\likelihood_${ngram.result.replace(" ", "_").replaceAll("[,|.|\"]", "sz")}.txt")) { p =>
+        tokensWithLikelihood.foreach(p.println)
+      }
+
+      tokensWithLikelihood
         .lastOption
 
     }
@@ -95,4 +102,9 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
     nGramModel.annotate(tokens)
   }
 
+
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try { op(p) } finally { p.close() }
+  }
 }

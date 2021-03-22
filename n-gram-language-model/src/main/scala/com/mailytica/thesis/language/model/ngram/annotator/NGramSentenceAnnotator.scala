@@ -2,6 +2,7 @@ package com.mailytica.thesis.language.model.ngram.annotator
 
 import com.johnsnowlabs.nlp.AnnotatorApproach
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
+import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Dataset
@@ -12,6 +13,12 @@ class NGramSentenceAnnotator (override val uid: String) extends AnnotatorApproac
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
   override val outputAnnotatorType: AnnotatorType = TOKEN
 
+  val n: Param[Int] = new Param(this, "n", "")
+
+  def setN(value: Int): this.type = set(this.n, value)
+
+  setDefault(this.n, 3)
+
   def this() = this(Identifiable.randomUID("NGRAM_SENTENCES"))
 
   override def train(dataset: Dataset[_], recursivePipeline: Option[PipelineModel]): NGramSentenceAnnotatorModel = {
@@ -19,7 +26,7 @@ class NGramSentenceAnnotator (override val uid: String) extends AnnotatorApproac
     val nGramAnnotator = new NGramAnnotator()
       .setInputCols("token")
       .setOutputCol("ngramsProbability")
-      .setN(3)
+      .setN($(n))
 
     val model = nGramAnnotator.train(dataset)
 
