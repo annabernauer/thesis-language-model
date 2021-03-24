@@ -5,7 +5,9 @@ import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import com.johnsnowlabs.nlp.annotators.NGramGenerator
 import org.apache.spark.ml.util.Identifiable
 
-class SentenceEndMarker(override val uid: String) extends AnnotatorModel[NGramGenerator] {
+import scala.util.matching.Regex
+
+class SentenceEndMarker(override val uid: String) extends AnnotatorModel[SentenceEndMarker] {
 
   override val outputAnnotatorType: AnnotatorType = DOCUMENT
 
@@ -15,19 +17,24 @@ class SentenceEndMarker(override val uid: String) extends AnnotatorModel[NGramGe
 
   val SENTENCE_END: String = " <SENTENCE_END>"
 
+  val REGEX_SENTENCE_END: Regex = "(\\.|\\!|\\?|\\:|\\R)$".r
+
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
-
-    val b = new StringBuilder()
-
-//    SENTENCE_END ++ annotations.headOption
 
     annotations.map{ sentence =>
 
-      val result = sentence.result.replace(".", "." + SENTENCE_END)
+      val result = sentence.result
 
+      val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {
+        case None => result
+        case Some(_) => result + SENTENCE_END
+      }
+
+      println("resultWithSentenceEnd")
+      println(resultWithSentenceEnd)
       sentence.copy(
 
-        result = result
+        result = resultWithSentenceEnd
       )
     }
   }
