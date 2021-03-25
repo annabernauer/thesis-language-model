@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.ngram.textSplittingDemo
+package com.mailytica.thesis.language.model.ngram.pipelines.textSplittingDemo
 
 ;
 

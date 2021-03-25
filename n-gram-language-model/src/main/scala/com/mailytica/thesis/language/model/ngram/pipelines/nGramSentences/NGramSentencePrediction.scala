@@ -1,8 +1,9 @@
-package com.mailytica.thesis.language.model.ngram.nGramSentences
+package com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences
 
 import com.johnsnowlabs.nlp.DocumentAssembler
 import com.johnsnowlabs.nlp.annotator.{SentenceDetector, Tokenizer}
-import com.mailytica.thesis.language.model.ngram.annotator.{NGramSentenceAnnotator, SentenceEndMarker, SentenceSplitter}
+import com.mailytica.thesis.language.model.ngram.annotators.ngram.NGramSentenceAnnotator
+import com.mailytica.thesis.language.model.ngram.annotators.{SentenceEndMarker, SentenceSplitter}
 import org.apache.spark.ml.PipelineStage
 
 

@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.ngram.matching
+package com.mailytica.thesis.language.model.ngram.pipelines.matching
 
 import com.johnsnowlabs.nlp.annotator.RegexMatcherModel
 import org.apache.spark.ml.PipelineStage

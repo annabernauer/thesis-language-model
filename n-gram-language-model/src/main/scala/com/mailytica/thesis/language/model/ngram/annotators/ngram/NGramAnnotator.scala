@@ -1,8 +1,8 @@
-package com.mailytica.thesis.language.model.ngram.annotator
+package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
-import java.io.{BufferedWriter, File, FileWriter}
+import java.io.File
 
-import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
+import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorApproach}
 import org.apache.commons.io.FileUtils

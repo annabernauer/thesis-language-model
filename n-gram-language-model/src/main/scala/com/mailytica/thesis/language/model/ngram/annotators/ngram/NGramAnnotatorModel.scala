@@ -1,8 +1,6 @@
-package com.mailytica.thesis.language.model.ngram.annotator
+package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
-import java.io.File
-
-import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
+import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}

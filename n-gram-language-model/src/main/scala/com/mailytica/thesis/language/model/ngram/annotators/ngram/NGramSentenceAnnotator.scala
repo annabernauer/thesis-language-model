@@ -1,9 +1,9 @@
-package com.mailytica.thesis.language.model.ngram.annotator
+package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
 import com.johnsnowlabs.nlp.AnnotatorApproach
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
+import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.param.Param
-import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Dataset
 

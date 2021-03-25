@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.ngram.matching
+package com.mailytica.thesis.language.model.ngram.pipelines.matching
 
 import com.johnsnowlabs.nlp.DocumentAssembler
 import com.johnsnowlabs.nlp.annotator.Tokenizer

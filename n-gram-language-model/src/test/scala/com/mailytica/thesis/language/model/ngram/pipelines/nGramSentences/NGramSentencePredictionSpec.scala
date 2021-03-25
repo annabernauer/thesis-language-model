@@ -1,9 +1,9 @@
-package com.mailytica.thesis.language.model.ngram.nGramSentences
+package com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences
 
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
-import com.mailytica.thesis.language.model.ngram.nGramSentences.ExecutableSentencePrediction.getResourceText
-import com.mailytica.thesis.language.model.ngram.nGramSentences.NGramSentencePrediction.getStages
+import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.ExecutableSentencePrediction.getResourceText
+import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.junit.runner.RunWith
 import org.scalatest.{Matchers, WordSpec}

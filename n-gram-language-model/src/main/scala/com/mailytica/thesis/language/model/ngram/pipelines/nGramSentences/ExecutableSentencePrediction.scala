@@ -1,8 +1,8 @@
-package com.mailytica.thesis.language.model.ngram.nGramSentences
+package com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences
 
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
-import com.mailytica.thesis.language.model.ngram.nGramSentences.NGramSentencePrediction.getStages
+import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 
 import scala.io.{Codec, Source}

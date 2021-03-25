@@ -1,8 +1,8 @@
-package com.mailytica.thesis.language.model.ngram.matching
+package com.mailytica.thesis.language.model.ngram.pipelines
 
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
-import com.mailytica.thesis.language.model.ngram.matching.TextMatching.{getGeneralStages, getSpecificStages}
+import com.mailytica.thesis.language.model.ngram.pipelines.matching.TextMatching.{getGeneralStages, getSpecificStages}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner

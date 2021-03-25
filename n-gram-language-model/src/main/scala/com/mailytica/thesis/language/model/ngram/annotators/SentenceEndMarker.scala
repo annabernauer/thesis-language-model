@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.ngram.annotator
+package com.mailytica.thesis.language.model.ngram.annotators
 
 import com.johnsnowlabs.nlp.AnnotatorType.DOCUMENT
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
