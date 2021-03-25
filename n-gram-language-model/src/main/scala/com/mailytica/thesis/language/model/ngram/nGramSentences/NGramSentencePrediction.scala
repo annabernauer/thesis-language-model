@@ -2,7 +2,7 @@ package com.mailytica.thesis.language.model.ngram.nGramSentences
 
 import com.johnsnowlabs.nlp.DocumentAssembler
 import com.johnsnowlabs.nlp.annotator.{SentenceDetector, Tokenizer}
-import com.mailytica.thesis.language.model.ngram.annotator.{NGramSentenceAnnotator, SentenceEndMarker}
+import com.mailytica.thesis.language.model.ngram.annotator.{NGramSentenceAnnotator, SentenceEndMarker, SentenceSplitter}
 import org.apache.spark.ml.PipelineStage
 
 
@@ -15,11 +15,17 @@ object NGramSentencePrediction {
       .setOutputCol("document")
       .setCleanupMode("disabled")
 
-    val sentenceSplitter = new SentenceDetector()
-      .setInputCols("document")
-      .setOutputCol("sentences")
-//      .setCustomBounds(Array("\\:", "\\R"))
-      .setCustomBounds(Array("\\R"))
+//    val sentenceSplitter = new SentenceDetector()
+//      .setInputCols("document")
+//      .setOutputCol("sentences")
+////      .setCustomBounds(Array("\\:", "\\R"))
+//      .setCustomBounds(Array("\\R"))
+
+        val sentenceSplitter = new SentenceSplitter()
+          .setInputCols("document")
+          .setOutputCol("sentences")
+    ////      .setCustomBounds(Array("\\:", "\\R"))
+    //      .setCustomBounds(Array("\\R"))
 
     val markedSentenceEnds = new SentenceEndMarker()
       .setInputCols("sentences")

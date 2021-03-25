@@ -16,20 +16,18 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
 
   val SENTENCE_END: String = " <SENTENCE_END>"
 
-  val REGEX_SENTENCE_END: String = "(\\.|\\!|\\?|\\:|\\R)$"
+  val REGEX_SENTENCE_END: Regex = "(\\.|:|\\R|\\?|\\!|$)".r()
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
-
     annotations
-      .map { document =>
+      .flatMap { document =>
 
         val result = document.result
 
-        val sentences: Seq[Annotation] = "(\\.|:|\\R|\\?|\\!|$)"
-          .r()
+        val sentences: Seq[Annotation] = REGEX_SENTENCE_END
           .findAllMatchIn(result)
-          .foldLeft(Seq.empty[Annotation]) { case (sentences : Seq[Annotation], sentenceBoundaryMatch : Regex.Match) =>
+          .foldLeft(Seq.empty[Annotation]) { case (sentences: Seq[Annotation], sentenceBoundaryMatch: Regex.Match) =>
             sentences :+ Annotation(
               annotatorType = AnnotatorType.DOCUMENT,
               result = result.substring(sentences.lastOption.map(_.`end`).getOrElse(0), sentenceBoundaryMatch.end),
@@ -37,22 +35,10 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
               end = sentenceBoundaryMatch.end,
               metadata = Map("sentence" -> sentences.length.toString)
             )
-          }
+          }.filterNot(sentence => sentence.result.trim.isEmpty)
 
         sentences
       }
-    val changedAnnotations: Seq[Annotation] =
-      annotations
-        .flatMap(document =>
-          document
-            .result
-            .split(REGEX_SENTENCE_END)
-            .zipWithIndex
-            .map {
-              case (result, index) => document.copy(result = result, metadata = Map(("sentence", index.toString)))
-            })
 
-    changedAnnotations
   }
-
 }
