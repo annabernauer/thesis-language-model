@@ -89,12 +89,9 @@ class NGramSentencePredictionSpec extends WordSpec with Matchers {
 
       "has a text with matches" should {
 
-//        val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(input(0))
-
         val annotated: Seq[Map[String, Seq[Annotation]]] = input.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString))
         "have predicted the sentence" in {
           annotated(0)("sentencePrediction").length should be(16)
-//          annotated(1)("sentencePrediction").length should be(16)
           annotated(2)("sentencePrediction").length should be(7)
           annotated(3)("sentencePrediction").length should be(9)
           annotated(4)("sentencePrediction").length should be(23)

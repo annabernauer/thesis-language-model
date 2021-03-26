@@ -1,17 +1,16 @@
-package com.mailytica.thesis.language.model.ngram.annotators.ngram
+package com.mailytica.thesis.language.model.evaluation.annotators.ngram
 
-import java.io.File
-
+import com.johnsnowlabs.nlp.{Annotation, AnnotatorApproach}
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
-import com.johnsnowlabs.nlp.{Annotation, AnnotatorApproach}
-import org.apache.commons.io.FileUtils
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Dataset
 
-class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAnnotatorModel] {
+class NGramEvaluation (override val uid: String) extends AnnotatorApproach[NGramEvaluationModel]{
+
+  override val description: String = "NGramEvaluation"
 
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
   override val outputAnnotatorType: AnnotatorType = TOKEN
@@ -24,8 +23,8 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
 
   def this() = this(Identifiable.randomUID("NGRAM_ANNOTATOR"))
 
-  override def train(dataset: Dataset[_], recursivePipeline: Option[PipelineModel]): NGramAnnotatorModel = {
 
+  override def train(dataset: Dataset[_], recursivePipeline: Option[PipelineModel]): NGramEvaluationModel = {
     import dataset.sparkSession.implicits._
 
     val tokensPerDocuments: Seq[Array[Annotation]] = dataset
@@ -45,23 +44,7 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
     val historiesMap: Map[String, Int] = getCountedMap(histories)
     val sequencesMap: Map[String, Int] = getCountedMap(sequences)
 
-    val file : File = new File("target\\sentencePrediction\\")
-    FileUtils.deleteQuietly(file)
-    if (!file.exists) {
-      file.mkdir
-    }
-
-    printToFile(new File("target\\sentencePrediction\\dictionary.txt")) { p =>
-      dictionary.foreach(p.println)
-    }
-    printToFile(new File("target\\sentencePrediction\\historiesMap.txt")) { p =>
-      historiesMap.foreach(p.println)
-    }
-    printToFile(new File("target\\sentencePrediction\\sequencesMap.txt")) { p =>
-      sequencesMap.foreach(p.println)
-    }
-
-    new NGramAnnotatorModel()
+    new NGramEvaluationModel()
       .setHistories(historiesMap)
       .setSequences(sequencesMap)
       .setN($(n))
@@ -87,10 +70,4 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
     }
   }
 
-  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
-    val p = new java.io.PrintWriter(f)
-    try { op(p) } finally { p.close() }
-  }
-
-  override val description: String = "NGramAnnotator"
 }

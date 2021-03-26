@@ -9,6 +9,7 @@
 
 	<modules>
         <module>n-gram-language-model</module>
+        <module>n-gram-evaluation</module>
     </modules>
 	
     <profiles>

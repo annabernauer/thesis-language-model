@@ -1,8 +1,7 @@
-package com.mailytica.thesis.language.model.ngram.annotators
+package com.mailytica.thesis.language.model.evaluation.annotators
 
 import com.johnsnowlabs.nlp.AnnotatorType.DOCUMENT
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
-import com.johnsnowlabs.nlp.annotators.NGramGenerator
 import org.apache.spark.ml.util.Identifiable
 
 import scala.util.matching.Regex

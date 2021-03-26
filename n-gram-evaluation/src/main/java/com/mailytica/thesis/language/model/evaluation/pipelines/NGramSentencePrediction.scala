@@ -1,11 +1,10 @@
-package com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences
+package com.mailytica.thesis.language.model.evaluation.pipelines
 
 import com.johnsnowlabs.nlp.DocumentAssembler
-import com.johnsnowlabs.nlp.annotator.{SentenceDetector, Tokenizer}
-import com.mailytica.thesis.language.model.ngram.annotators.ngram.NGramSentenceAnnotator
-import com.mailytica.thesis.language.model.ngram.annotators.{SentenceEndMarker, SentenceSplitter}
+import com.johnsnowlabs.nlp.annotator.Tokenizer
+import com.mailytica.thesis.language.model.evaluation.annotators.ngram.NGramSentenceEvaluation
+import com.mailytica.thesis.language.model.evaluation.annotators.{SentenceEndMarker, SentenceSplitter}
 import org.apache.spark.ml.PipelineStage
-
 
 object NGramSentencePrediction {
 
@@ -28,7 +27,7 @@ object NGramSentencePrediction {
       .setInputCols("sentencesWithFlaggedEnds")
       .setOutputCol("token")
 
-    val nGramSentenceAnnotator = new NGramSentenceAnnotator()
+    val nGramSentenceAnnotator = new NGramSentenceEvaluation()
       .setInputCols("token")
       .setOutputCol("sentencePrediction")
       .setN(n)
