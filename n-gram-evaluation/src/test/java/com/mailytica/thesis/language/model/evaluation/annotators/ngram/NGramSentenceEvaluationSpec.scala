@@ -36,30 +36,14 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
       "has a text with matches" should {
 
         val annotated: Seq[Map[String, Seq[Annotation]]] = texts.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString))
-//        val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(texts.head)
 
-        val flatMap : Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
-
-        val likelihoods: Seq[Double] =
-          flatMap
-          .map(annotation => annotation.metadata.getOrElse("probability", "0.0").toDouble)
-
-        val invertedLikelihoods: Seq[Double] = likelihoods.map(likelihood => 1/likelihood)
-        val perplexity : Double = sqrt(invertedLikelihoods.foldLeft(1.0)(_ * _))
-
-        val avgLogLikelihood: Double =
-          likelihoods
-            .map(likelihood => log(likelihood))
-            .foldLeft(0.0)(_ + _) / likelihoods.size
+        val flatMap: Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
 
         flatMap.foreach(annotation => println(s"${annotation.result} ${annotation.metadata}"))
-        println(perplexity)
-        println(avgLogLikelihood)
 
         "have predicted the sentence" in {
 
         }
-
       }
     }
   }

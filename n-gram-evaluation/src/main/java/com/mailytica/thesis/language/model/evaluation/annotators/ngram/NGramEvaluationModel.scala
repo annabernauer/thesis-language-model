@@ -3,6 +3,7 @@ package com.mailytica.thesis.language.model.evaluation.annotators.ngram
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
+import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 
@@ -36,24 +37,24 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
-    def getLikelihood(ngram: String): Option[Double] = {
+    def getLikelihood(ngram: String): Double = {
 
       val historyString =
         ngram
-          .split(" ")
+          .split("\\" + DELIMITER)
           .dropRight(1)
-          .mkString(" ")
+          .mkString(DELIMITER)
 
       val likelihood: Double = Try {
-        $$(sequences).getOrElse[Int](s"$ngram", 0).toDouble / $$(histories).getOrElse[Int](historyString, 0).toDouble
+        $$(sequences).getOrElse[Int](ngram, 0).toDouble / $$(histories).getOrElse[Int](historyString, 0).toDouble
       }.getOrElse(0.0)
 
-      Option(likelihood)
+      likelihood
     }
 
     val likelihood: Double = annotations
       .lastOption
-      .flatMap(ngram => getLikelihood(ngram.result))
+      .map(ngram => getLikelihood(ngram.result))
       .getOrElse(0.0)
 
 

@@ -2,6 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <packaging>war</packaging>
+    <version>0.0.1-SNAPSHOT</version>
     <parent>
         <artifactId>thesis-language-model</artifactId>
         <groupId>com.mailytica.ai</groupId>
@@ -12,6 +14,12 @@
     <artifactId>n-gram-evaluation</artifactId>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.mailytica.ai</groupId>
+            <artifactId>util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.jsuereth</groupId>

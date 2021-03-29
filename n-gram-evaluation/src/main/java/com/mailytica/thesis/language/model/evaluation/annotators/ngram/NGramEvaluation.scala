@@ -3,6 +3,7 @@ package com.mailytica.thesis.language.model.evaluation.annotators.ngram
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorApproach}
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
+import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
@@ -64,6 +65,7 @@ class NGramEvaluation (override val uid: String) extends AnnotatorApproach[NGram
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
       .setEnableCumulative(false)
+      .setDelimiter(DELIMITER)
 
     tokensPerDocuments.flatMap { tokens =>
       nGramModel.annotate(tokens)

@@ -1,11 +1,13 @@
 package com.mailytica.thesis.language.model.evaluation.annotators.ngram
 
-import com.johnsnowlabs.nlp
+import breeze.numerics.{log, sqrt}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
+import com.mailytica.thesis.language.model.evaluation.annotators.ngram.CustomAnnotationTypes.LANGUAGE_MODEL_ANNOTATION
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
+import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 
 class NGramSentenceEvaluationModel (override val uid: String) extends AnnotatorModel[NGramSentenceEvaluationModel] {
 
@@ -13,7 +15,7 @@ class NGramSentenceEvaluationModel (override val uid: String) extends AnnotatorM
 
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
 
-  override val outputAnnotatorType: AnnotatorType = TOKEN
+  override val outputAnnotatorType: AnnotatorType = LANGUAGE_MODEL_ANNOTATION
 
   val n: Param[Int] = new Param(this, "n", "")
 
@@ -28,10 +30,31 @@ class NGramSentenceEvaluationModel (override val uid: String) extends AnnotatorM
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
     val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n))
-    val nGramsWithProbability: Seq[nlp.Annotation] = nGrams.flatMap(annotation => $(nGramEvaluationModel).annotate(Seq(annotation)))
+    val nGramsWithProbability: Seq[Annotation] = nGrams.flatMap(annotation => $(nGramEvaluationModel).annotate(Seq(annotation)))
 
-    nGramsWithProbability
+    val likelihoods: Seq[Double] =
+      nGramsWithProbability
+        .map(annotation => annotation.metadata.getOrElse("probability", "0.0").toDouble)
+
+    val invertedLikelihoods: Seq[Double] = likelihoods.map(likelihood => 1/likelihood)
+    val perplexity : Double = sqrt(invertedLikelihoods.foldLeft(1.0)(_ * _))
+
+    val avgLogLikelihood: Double =
+      likelihoods
+        .map(likelihood => breeze.numerics.log(likelihood))
+        .sum / likelihoods.size
+
+
+    Seq(new Annotation(
+      LANGUAGE_MODEL_ANNOTATION,
+      0,
+      0,
+      nGrams.headOption.map(_.result).getOrElse("empty").replace(DELIMITER, " "),
+      Map("perplexity" -> perplexity.toString, "avgLogLikelihood" -> avgLogLikelihood.toString)
+    ))
   }
+
+
 
 
   def getTransformedNGramString(tokens: Seq[Annotation], n: Int): Seq[Annotation] = {
@@ -41,6 +64,7 @@ class NGramSentenceEvaluationModel (override val uid: String) extends AnnotatorM
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
       .setEnableCumulative(false)
+      .setDelimiter(DELIMITER)
 
     nGramModel.annotate(tokens)
   }
