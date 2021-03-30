@@ -21,7 +21,6 @@ class SentenceEndMarker(override val uid: String) extends AnnotatorModel[Sentenc
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
     annotations
-//      .map(sentence => sentence.copy(result = sentence.result.replaceAll("\\R", SENTENCE_END)))
       .map{ sentence =>
 
       val result = sentence.result
@@ -31,14 +30,10 @@ class SentenceEndMarker(override val uid: String) extends AnnotatorModel[Sentenc
         case Some(_) => result.replaceAll("\\R", "") + SENTENCE_END
       }
 
-//      println("resultWithSentenceEnd")
-//      println(resultWithSentenceEnd)
       sentence.copy(
 
         result = resultWithSentenceEnd
       )
     }
-//      .filterNot(sentence => sentence.result.startsWith(SENTENCE_END))
   }
-
 }

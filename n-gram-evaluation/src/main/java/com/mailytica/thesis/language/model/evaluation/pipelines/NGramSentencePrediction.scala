@@ -3,7 +3,7 @@ package com.mailytica.thesis.language.model.evaluation.pipelines
 import com.johnsnowlabs.nlp.DocumentAssembler
 import com.johnsnowlabs.nlp.annotator.Tokenizer
 import com.mailytica.thesis.language.model.evaluation.annotators.ngram.NGramSentenceEvaluation
-import com.mailytica.thesis.language.model.evaluation.annotators.{SentenceEndMarker, SentenceSplitter}
+import com.mailytica.thesis.language.model.evaluation.annotators.{RedundantTextTrimmer, SentenceEndMarker, SentenceSplitter}
 import org.apache.spark.ml.PipelineStage
 
 object NGramSentencePrediction {
@@ -15,8 +15,12 @@ object NGramSentencePrediction {
       .setOutputCol("document")
       .setCleanupMode("disabled")
 
-    val sentenceSplitter = new SentenceSplitter()
+    val redundantTextTrimmer = new RedundantTextTrimmer()
       .setInputCols("document")
+      .setOutputCol("trimmedDocument")
+
+    val sentenceSplitter = new SentenceSplitter()
+      .setInputCols("trimmedDocument")
       .setOutputCol("sentences")
 
     val markedSentenceEnds = new SentenceEndMarker()
@@ -32,7 +36,7 @@ object NGramSentencePrediction {
       .setOutputCol("sentencePrediction")
       .setN(n)
 
-    Array(documentAssembler, sentenceSplitter, markedSentenceEnds, tokenizer, nGramSentenceAnnotator)
+    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, markedSentenceEnds, tokenizer, nGramSentenceAnnotator)
   }
 
 }

@@ -1,13 +1,14 @@
 package com.mailytica.thesis.language.model.evaluation.annotators.ngram
 
-import breeze.numerics.{log, sqrt}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
+import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.mailytica.thesis.language.model.evaluation.pipelines.NGramSentencePrediction.getStages
 import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.sql.DataFrame
 import org.junit.runner.RunWith
-import org.scalatest.{Matchers, WordSpec}
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.{Matchers, WordSpec}
 
 import scala.io.{Codec, Source}
 
@@ -23,13 +24,13 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
     val nlpPipeline = new Pipeline()
 
 
-    "is trained with big data" when {
+    "is trained with more data" when {
       nlpPipeline.setStages(getStages(4))
 
 
-      val texts: Seq[String] = getResourceText("/sentencePrediction/textsForTraining/productionRelease")
+      val texts: Seq[String] = getCleanResourceText("/sentencePrediction/textsForTraining/productionRelease", 9)
 
-      val texts2: Seq[String] = getResourceText("/sentencePrediction/textsForTraining/shippingNotification")
+      val texts2: Seq[String] = getCleanResourceText("/sentencePrediction/textsForTraining/shippingNotification", 9)
 
       val pipelineModel: PipelineModel = nlpPipeline.fit((texts ++ texts2).toDF("text"))
 
@@ -37,9 +38,40 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
 
         val annotated: Seq[Map[String, Seq[Annotation]]] = texts.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString))
 
-        val flatMap: Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
+//        val flatMap: Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
+//        flatMap.foreach(annotation => println(s"${annotation.result} ${annotation.metadata}"))
 
-        flatMap.foreach(annotation => println(s"${annotation.result} ${annotation.metadata}"))
+        "have predicted the sentence" in {
+
+        }
+      }
+    }
+    "is trained with big data" when {
+      nlpPipeline.setStages(getStages(4))
+
+      val path = "src/main/resources/sentencePrediction/textsForTraining/messagesSmall.csv"
+
+      val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
+        .option("header", "true")
+        .option("quote", "\"")
+        .option("escape", "\\")
+        .option("multiLine", value = true)
+        .load(path)
+
+//      df.show(false)
+
+      val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
+
+      "has a text with matches" should {
+
+//        val annotated: Seq[Map[String, Seq[Annotation]]] = strings.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString)) // model transform
+//        val flatMap: Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
+//        flatMap.foreach(annotation => println(s"${annotation.result} ${annotation.metadata}"))
+
+        val annotated: DataFrame =  pipelineModel.transform(df.toDF("text"))
+
+//        annotated.show()
+        annotated.select("sentencePrediction").show(false)
 
         "have predicted the sentence" in {
 
@@ -48,8 +80,8 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
     }
   }
 
-  def getResourceText(path: String) = {
-    Seq.range(0, 9).map {
+  def getCleanResourceText(path: String, quantity: Int) = {
+    Seq.range(0, quantity).map {
       x => {
         resource
           .managed(getClass.getResourceAsStream(s"$path/00$x.txt"))
