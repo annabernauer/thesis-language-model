@@ -42,6 +42,8 @@ class NGramEvaluation (override val uid: String) extends AnnotatorApproach[NGram
     val histories: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n) - 1)
     val sequences: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n))
 
+    sequences.foreach(println)
+
     val historiesMap: Map[String, Int] = getCountedMap(histories)
     val sequencesMap: Map[String, Int] = getCountedMap(sequences)
 
@@ -60,11 +62,11 @@ class NGramEvaluation (override val uid: String) extends AnnotatorApproach[NGram
 
   def getTransformedNGramString(tokensPerDocuments: Seq[Array[Annotation]], n: Int): Seq[Annotation] = {
 
-    val nGramModel = new NGramGenerator()
+    val nGramModel = new NGramCustomGenerator()
       .setInputCols("tokens")
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
-      .setEnableCumulative(false)
+//      .setEnableCumulative(false)
       .setDelimiter(DELIMITER)
 
     tokensPerDocuments.flatMap { tokens =>

@@ -32,7 +32,7 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[Redu
 
     case class NgramChunkAnnotation(currentChunkIdx: Int, annotations: Seq[Annotation])
 
-    val range = $(n) to $(n)
+    val range = Range.inclusive(1, $(n))
 
     val ngramsAnnotation = range.foldLeft(NgramChunkAnnotation(0, Seq[Annotation]()))((currentNgChunk, k) => {
 

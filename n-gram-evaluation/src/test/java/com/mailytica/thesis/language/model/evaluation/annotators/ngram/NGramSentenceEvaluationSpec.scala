@@ -32,11 +32,11 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
 
       val texts2: Seq[String] = getCleanResourceText("/sentencePrediction/textsForTraining/shippingNotification", 9)
 
-      val pipelineModel: PipelineModel = nlpPipeline.fit((texts ++ texts2).toDF("text"))
+//      val pipelineModel: PipelineModel = nlpPipeline.fit((texts ++ texts2).toDF("text"))
 
       "has a text with matches" should {
 
-        val annotated: Seq[Map[String, Seq[Annotation]]] = texts.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString))
+//        val annotated: Seq[Map[String, Seq[Annotation]]] = texts.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString))
 
 //        val flatMap: Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
 //        flatMap.foreach(annotation => println(s"${annotation.result} ${annotation.metadata}"))
@@ -49,7 +49,7 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
     "is trained with big data" when {
       nlpPipeline.setStages(getStages(4))
 
-      val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
+      val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messagesSmall.csv"
 
       val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
         .option("header", "true")

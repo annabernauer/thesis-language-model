@@ -2,8 +2,10 @@ package com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences
 
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
+import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
 import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.sql.DataFrame
 
 import scala.io.{Codec, Source}
 import scala.io.StdIn.readLine
@@ -19,18 +21,27 @@ object ExecutableSentencePrediction {
 
     val nlpPipeline = new Pipeline()
 
-    nlpPipeline.setStages(getStages(4))
+    nlpPipeline.setStages(getStages(5))
 
     val texts : Seq[String] = getResourceText("/sentencePrediction/textsForTraining/productionRelease")
 
     val texts2 : Seq[String] = getResourceText("/sentencePrediction/textsForTraining/shippingNotification")
 
+    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
+
+    val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
+      .option("header", "true")
+      .option("quote", "\"")
+      .option("escape", "\\")
+      .option("multiLine", value = true)
+      .load(path)
+
+    df.show()
+
+    val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
+
     while (true) {
       val input = readLine("Please type your text\n")
-
-      import ResourceHelper.spark.implicits._
-
-      val pipelineModel: PipelineModel = nlpPipeline.fit((texts ++ texts2).toDF("text"))
 
       val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(input)
 
@@ -43,9 +54,6 @@ object ExecutableSentencePrediction {
         }
 //        print(s"${x.result} ")
       })
-
-
-
 
       print("\n\n")
 

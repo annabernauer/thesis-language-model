@@ -73,11 +73,11 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
 
   def getTransformedNGramString(tokens: Seq[Annotation], n: Int): Seq[Annotation] = {
 
-    val nGramModel = new NGramGenerator()
+    val nGramModel = new NGramCustomGenerator()
       .setInputCols("tokens")
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
-      .setEnableCumulative(false)
+//      .setEnableCumulative(false)
       .setDelimiter(DELIMITER)
 
     nGramModel.annotate(tokens)

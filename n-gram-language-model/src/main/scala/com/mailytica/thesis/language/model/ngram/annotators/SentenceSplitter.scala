@@ -27,7 +27,8 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
 
         val sentences: Seq[Annotation] = REGEX_SENTENCE_END
           .findAllMatchIn(result)
-          .foldLeft(Seq.empty[Annotation]) { case (sentences: Seq[Annotation], sentenceBoundaryMatch: Regex.Match) =>
+          .foldLeft(Seq.empty[Annotation]) { case (sentences: Seq[Annotation], sentenceBoundaryMatch: Regex.Match) => //first param is acc and is initialized with a start value
+                                                                                                                      //second param is the list/seq... iterated
             sentences :+ Annotation(
               annotatorType = AnnotatorType.DOCUMENT,
               result = result.substring(sentences.lastOption.map(_.`end`).getOrElse(0), sentenceBoundaryMatch.end),

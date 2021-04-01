@@ -12,7 +12,7 @@ class RedundantTextTrimmer(override val uid: String) extends AnnotatorModel[Redu
 
   override val inputAnnotatorTypes: Array[String] = Array(DOCUMENT)
 
-  def this() = this(Identifiable.randomUID("SENTENCE_END_MARKER"))
+  def this() = this(Identifiable.randomUID("REDUNDANT_TEXT_TRIMMER"))
 
   val REGEX_FOOTER : String = "(?i)(Mit freundlichen Grüßen|Viele Grüße|Beste Grüße|Liebe Grüße|freundliche Grüße|With kind regards)[^*]*" //Doesn't work with ^ for occurrences on the start of a line
 
