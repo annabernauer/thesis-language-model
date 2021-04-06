@@ -5,11 +5,13 @@ import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.mailytica.thesis.language.model.evaluation.pipelines.NGramSentencePrediction.getStages
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Row}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpec}
+import shapeless.syntax.std.tuple.unitTupleOps
 
+import java.util
 import scala.io.{Codec, Source}
 
 @RunWith(classOf[JUnitRunner])
@@ -71,6 +73,25 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
         val annotated: DataFrame =  pipelineModel.transform(df.toDF("text"))
 
         annotated.select("sentencePrediction").show(100, false)
+
+        val annotationsPerDocuments : Array[Array[Annotation]] = annotated
+          .select("sentencePrediction")
+          .as[Array[Annotation]]
+          .collect()
+
+        val durationAverage : Double = annotationsPerDocuments.map(tokens => tokens
+          .map(token => token
+            .metadata
+            .getOrElse("duration", "0.0").toDouble).sum).sum
+
+        val medianAverage : Double = annotationsPerDocuments.map(tokens => tokens
+          .map(token => token
+            .metadata
+            .getOrElse("median", "0.0").toDouble).sum).sum
+//        durationAverage.foreach(println)
+
+        println(durationAverage)
+        println(medianAverage)
 
         "have predicted the sentence" in {
 

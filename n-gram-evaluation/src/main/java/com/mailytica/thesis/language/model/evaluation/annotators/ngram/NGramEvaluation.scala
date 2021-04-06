@@ -42,7 +42,7 @@ class NGramEvaluation (override val uid: String) extends AnnotatorApproach[NGram
     val histories: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n) - 1)
     val sequences: Seq[Annotation] = getTransformedNGramString(tokensPerDocuments, $(n))
 
-    sequences.foreach(println)
+//    sequences.foreach(println)
 
     val historiesMap: Map[String, Int] = getCountedMap(histories)
     val sequencesMap: Map[String, Int] = getCountedMap(sequences)
