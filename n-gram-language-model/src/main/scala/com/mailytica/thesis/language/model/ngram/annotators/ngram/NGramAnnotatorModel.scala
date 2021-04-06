@@ -91,11 +91,10 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
 
   def getTransformedNGramString(tokens: Seq[Annotation], n: Int): Seq[Annotation] = {
 
-    val nGramModel = new NGramGenerator()
+    val nGramModel = new NGramCustomGenerator()
       .setInputCols("tokens")
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
-      .setEnableCumulative(false)
 
     nGramModel.annotate(tokens)
   }

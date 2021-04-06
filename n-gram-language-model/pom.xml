@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>n-ngram-language-model</artifactId>
+    <artifactId>n-gram-language-model</artifactId>
 
     <properties>
 

@@ -76,11 +76,10 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
 
   def getTransformedNGramString(tokensPerDocuments: Seq[Array[Annotation]], n: Int): Seq[Annotation] = {
 
-    val nGramModel = new NGramGenerator()
+    val nGramModel = new NGramCustomGenerator()
       .setInputCols("tokens")
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
-      .setEnableCumulative(false)
 
     tokensPerDocuments.flatMap { tokens =>
       nGramModel.annotate(tokens)

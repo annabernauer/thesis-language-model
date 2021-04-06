@@ -1,8 +1,7 @@
-package com.mailytica.thesis.language.model.evaluation.annotators.ngram
+package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
+import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
-import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, DOCUMENT, TOKEN}
-import com.mailytica.thesis.language.model.evaluation.annotators.RedundantTextTrimmer
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 

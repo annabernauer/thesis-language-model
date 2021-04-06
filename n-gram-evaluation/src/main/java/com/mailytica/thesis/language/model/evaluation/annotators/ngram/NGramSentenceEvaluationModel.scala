@@ -36,6 +36,13 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
       nGramsWithProbability
         .map(annotation => annotation.metadata.getOrElse("probability", "0.0").toDouble)
 
+
+    val likelihoods2: Seq[(Double, String)] =
+      nGramsWithProbability
+        .map(annotation => (annotation.metadata.getOrElse("probability", "0.0").toDouble, annotation.result))
+
+    likelihoods2.foreach(a => println(a._1 + " " + a._2))
+
     val invertedLikelihoods: Seq[Double] = likelihoods.map(likelihood => 1 / likelihood)
     val perplexity: Double = sqrt(invertedLikelihoods.product)
 
