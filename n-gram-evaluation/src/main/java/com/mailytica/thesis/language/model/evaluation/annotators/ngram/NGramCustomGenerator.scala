@@ -16,9 +16,13 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
 
   val n: Param[Int] = new Param(this, "n", "")
 
+  val nGramMinimum: Param[Int] = new Param(this, "nGramMinimum", "")
+
   val delimiter: Param[String] = new Param[String](this, "delimiter", "Glue character used to join the tokens")
 
   def setN(value: Int): this.type = set(this.n, value)
+
+  def setNGramMinimum(value: Int): this.type = set(this.nGramMinimum, value)
 
   def setDelimiter(value: String): this.type = {
     require(value.length == 1, "Delimiter should have length == 1")
@@ -26,13 +30,14 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
   }
 
   setDefault(this.n -> 3,
-    this.delimiter -> " ")
+    this.delimiter -> " ",
+  this.nGramMinimum -> 1)
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
     case class NgramChunkAnnotation(currentChunkIdx: Int, annotations: Seq[Annotation])
 
-    val range = Range.inclusive(1, $(n))
+    val range = Range.inclusive($(nGramMinimum), $(n))
 
     val ngramsAnnotation = range.foldLeft(NgramChunkAnnotation(0, Seq[Annotation]()))((currentNgChunk, k) => {
 

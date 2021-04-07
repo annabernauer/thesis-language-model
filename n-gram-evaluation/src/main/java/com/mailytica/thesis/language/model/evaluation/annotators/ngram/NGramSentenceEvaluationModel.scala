@@ -37,11 +37,11 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
         .map(annotation => annotation.metadata.getOrElse("probability", "0.0").toDouble)
 
 
-    val likelihoods2: Seq[(Double, String)] =
-      nGramsWithProbability
-        .map(annotation => (annotation.metadata.getOrElse("probability", "0.0").toDouble, annotation.result))
-
-    likelihoods2.foreach(a => println(a._1 + " " + a._2))
+//    val likelihoods2: Seq[(Double, String)] =
+//      nGramsWithProbability
+//        .map(annotation => (annotation.metadata.getOrElse("probability", "0.0").toDouble, annotation.result))
+//
+//    likelihoods2.foreach(a => println(a._1 + " " + a._2))
 
     val invertedLikelihoods: Seq[Double] = likelihoods.map(likelihood => 1 / likelihood)
     val perplexity: Double = sqrt(invertedLikelihoods.product)
@@ -51,7 +51,7 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
         .map(likelihood => breeze.numerics.log(likelihood))
         .sum / likelihoods.size
 
-    val median = medianCalculator(likelihoods)
+    val medianAvg = medianCalculator(likelihoods)
 
     val avgLikelihood: Double = likelihoods.sum / likelihoods.size
 
@@ -63,7 +63,7 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
       Map("perplexity" -> perplexity.toString,
         "avgLogLikelihood" -> avgLogLikelihood.toString,
         "avgLikelihood" -> avgLikelihood.toString,
-        "median" -> median.toString,
+        "median" -> medianAvg.toString,
         "duration" -> duration.toString)
     ))
   }
@@ -84,6 +84,7 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
       .setInputCols("tokens")
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
+      .setNGramMinimum(2)                                           //generated ngrams aren't allowed to have a length n < 2 (has to be n - 1 > 0 )
 //      .setEnableCumulative(false)
       .setDelimiter(DELIMITER)
 

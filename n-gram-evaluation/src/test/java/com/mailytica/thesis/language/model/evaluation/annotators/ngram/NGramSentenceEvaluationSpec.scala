@@ -49,9 +49,9 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
       }
     }
     "is trained with big data" when {
-      nlpPipeline.setStages(getStages(4))
+      nlpPipeline.setStages(getStages(5))
 
-      val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messagesSmall.csv"
+      val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
 
       val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
         .option("header", "true")
@@ -72,32 +72,44 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
 
         val annotated: DataFrame =  pipelineModel.transform(df.toDF("text"))
 
-        annotated.select("sentencePrediction").show(100, false)
-
-        val annotationsPerDocuments : Array[Array[Annotation]] = annotated
+        val processed = annotated
           .select("sentencePrediction")
+          .cache()
+
+        processed.show(100, false)
+
+        val annotationsPerDocuments : Array[Annotation] = processed
           .as[Array[Annotation]]
           .collect()
+          .flatten
 
-        val durationAverage : Double = annotationsPerDocuments.map(tokens => tokens
-          .map(token => token
-            .metadata
-            .getOrElse("duration", "0.0").toDouble).sum).sum
+        val avgLogLikelihoodAverage = getAverage("avgLogLikelihood", annotationsPerDocuments)
+        val durationAverage = getAverage("duration", annotationsPerDocuments)
+        val perplexityAverage = getAverage("perplexity", annotationsPerDocuments)
+        val medianAverage = getAverage("medianAvg", annotationsPerDocuments)
+        val avgLikelihood = getAverage("avgLikelihood", annotationsPerDocuments)
 
-        val medianAverage : Double = annotationsPerDocuments.map(tokens => tokens
-          .map(token => token
-            .metadata
-            .getOrElse("median", "0.0").toDouble).sum).sum
-//        durationAverage.foreach(println)
-
-        println(durationAverage)
-        println(medianAverage)
+        println("avgLogLikelihoodAverage " + avgLogLikelihoodAverage)
+        println("duration avg " + durationAverage)
+        println("perplexityAverage " + perplexityAverage)
+        println("median avg " + medianAverage)
+        println("avgLikelihood " + avgLikelihood)
 
         "have predicted the sentence" in {
 
         }
       }
     }
+  }
+
+  def getAverage(key: String, annotationsPerDocuments : Array[Annotation]) = {
+    annotationsPerDocuments
+      .map(language_model_annotation =>
+        language_model_annotation
+          .metadata
+          .getOrElse(key, "0.0").toDouble
+      )
+      .sum / annotationsPerDocuments.length
   }
 
   def getCleanResourceText(path: String, quantity: Int) = {
