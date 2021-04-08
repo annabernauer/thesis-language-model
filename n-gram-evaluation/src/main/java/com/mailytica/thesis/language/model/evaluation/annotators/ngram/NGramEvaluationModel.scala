@@ -5,13 +5,14 @@ import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 import org.apache.spark.ml.param.Param
-import org.apache.spark.ml.util.Identifiable
+import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 
 import scala.util.Try
 
-class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGramEvaluationModel] {
+class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGramEvaluationModel] with DefaultParamsWritable {
 
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
+
   override val outputAnnotatorType: AnnotatorType = TOKEN
 
   val histories: MapFeature[String, Int] = new MapFeature(this, "histories")
@@ -30,6 +31,12 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
   def setDictionary(value: Set[String]): this.type = set(dictionary, value)
 
   def setN(value: Int): this.type = set(this.n, value)
+
+  def getN: Int = $(n)
+
+  def getHistories: Map[String, Int] = $$(histories)
+  def getSequences: Map[String, Int] = $$(sequences)
+  def getDictionary: Set[String] = $$(dictionary)
 
   setDefault(this.n, 3)
 
@@ -68,5 +75,9 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
       .lastOption
       .map(annotation => annotation.copy(metadata = annotation.metadata + ("probability" -> likelihood.toString))).toSeq
   }
+
+}
+
+object NGramEvaluationModel extends DefaultParamsReadable[NGramEvaluationModel] {
 
 }

@@ -4,54 +4,82 @@ import breeze.numerics.{log, sqrt}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
+import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
 import com.mailytica.thesis.language.model.evaluation.annotators.ngram.CustomAnnotationTypes.LANGUAGE_MODEL_ANNOTATION
-import org.apache.spark.ml.param.Param
-import org.apache.spark.ml.util.Identifiable
+import org.apache.spark.ml.param.{IntArrayParam, IntParam, Param, StringArrayParam}
+import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 
-class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorModel[NGramSentenceEvaluationModel] {
+class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorModel[NGramSentenceEvaluationModel] with DefaultParamsWritable {
 
-  def this() = this(Identifiable.randomUID("NGRAM_SENTENCES"))
+  def this() = this(Identifiable.randomUID("NGRAM_SENTENCES_EVALUATION"))
 
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
 
   override val outputAnnotatorType: AnnotatorType = LANGUAGE_MODEL_ANNOTATION
 
-  val n: Param[Int] = new Param(this, "n", "")
+  val n: IntParam = new IntParam(this, "n", "")
 
-  val nGramEvaluationModel: Param[NGramEvaluationModel] = new Param(this, "nGramAnnotatorModel", "")
+  val historyKeys: StringArrayParam = new StringArrayParam(this, "historyKeys", "")
+  val historyValues: IntArrayParam = new IntArrayParam(this, "historyValues", "")
+
+  val sequenceKeys: StringArrayParam = new StringArrayParam(this, "sequenceKeys", "")
+  val sequenceValues: IntArrayParam = new IntArrayParam(this, "sequenceValues", "")
+
+  val dictionaryArray: StringArrayParam = new StringArrayParam(this, "dictionary", "")
+
+  def setHistoryKeys(value: Array[String]): this.type = set(historyKeys, value)
+  def setHistoryValues(value: Array[Int]): this.type = set(historyValues, value)
+
+  def setSequenceKeys(value: Array[String]): this.type = set(sequenceKeys, value)
+  def setSequenceValues(value: Array[Int]): this.type = set(sequenceValues, value)
+
+  def setDictionary(value: Array[String]): this.type = set(dictionaryArray, value)
 
   def setN(value: Int): this.type = set(this.n, value)
-
-  def setNGramEvaluationModel(value: NGramEvaluationModel): this.type = set(this.nGramEvaluationModel, value)
 
   setDefault(this.n, 3)
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
+
+    val nGramEvaluationModel = new NGramEvaluationModel()
+      .setSequences($(sequenceKeys).zip($(sequenceValues)).toMap)
+      .setHistories($(historyKeys).zip($(historyValues)).toMap)
+      .setDictionary($(dictionaryArray).toSet)
+      .setN($(n))
+
     val startTime = System.nanoTime
     val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n))
-    val nGramsWithProbability: Seq[Annotation] = nGrams.flatMap(annotation => $(nGramEvaluationModel).annotate(Seq(annotation)))
+    val nGramsWithProbability: Seq[Annotation] = nGrams.flatMap(annotation => nGramEvaluationModel.annotate(Seq(annotation)))
     val duration = (System.nanoTime - startTime) / 1e9d
     val likelihoods: Seq[Double] =
       nGramsWithProbability
         .map(annotation => annotation.metadata.getOrElse("probability", "0.0").toDouble)
 
-
-//    val likelihoods2: Seq[(Double, String)] =
+//    val likelihoods2: Seq[(Double, Double, String)] =
 //      nGramsWithProbability
-//        .map(annotation => (annotation.metadata.getOrElse("probability", "0.0").toDouble, annotation.result))
-//
-//    likelihoods2.foreach(a => println(a._1 + " " + a._2))
+//        .map(annotation => {
+//          val likelih = annotation.metadata.getOrElse("probability", "0.0").toDouble
+//          (likelih, 1 / likelih, annotation.result)
+//        })
+
+
 
     val invertedLikelihoods: Seq[Double] = likelihoods.map(likelihood => 1 / likelihood)
-    val perplexity: Double = sqrt(invertedLikelihoods.product)
+    val perplexity: Double = Math.pow(invertedLikelihoods.product, 1 / invertedLikelihoods.size.toDouble)
+//    likelihoods2.foreach(a => println(a._1 + " " + a._2 + " " + a._3))
+//    invertedLikelihoods.foreach(println)
+//    println("produkt " + invertedLikelihoods.product)
+//    println("size " + 1 / invertedLikelihoods.size.toDouble)
+
+//    println()
 
     val avgLogLikelihood: Double =
       likelihoods
         .map(likelihood => breeze.numerics.log(likelihood))
         .sum / likelihoods.size
 
-    val medianAvg = medianCalculator(likelihoods)
+    val medianLikelihoods = medianCalculator(likelihoods)
 
     val avgLikelihood: Double = likelihoods.sum / likelihoods.size
 
@@ -63,7 +91,7 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
       Map("perplexity" -> perplexity.toString,
         "avgLogLikelihood" -> avgLogLikelihood.toString,
         "avgLikelihood" -> avgLikelihood.toString,
-        "median" -> medianAvg.toString,
+        "medianLikelihoods" -> medianLikelihoods.toString,
         "duration" -> duration.toString)
     ))
   }
@@ -90,5 +118,9 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
 
     nGramModel.annotate(tokens)
   }
+
+}
+
+object NGramSentenceEvaluationModel extends DefaultParamsReadable[NGramSentenceEvaluationModel] {
 
 }

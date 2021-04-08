@@ -5,7 +5,7 @@ import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.mailytica.thesis.language.model.evaluation.pipelines.NGramSentencePrediction.getStages
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpec}
@@ -26,6 +26,7 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
     val nlpPipeline = new Pipeline()
 
 
+
     "is trained with more data" when {
       nlpPipeline.setStages(getStages(5))
 
@@ -34,14 +35,14 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
 
       val texts2: Seq[String] = getCleanResourceText("/sentencePrediction/textsForTraining/shippingNotification", 9)
 
-//      val pipelineModel: PipelineModel = nlpPipeline.fit((texts ++ texts2).toDF("text"))
+      //      val pipelineModel: PipelineModel = nlpPipeline.fit((texts ++ texts2).toDF("text"))
 
       "has a text with matches" should {
 
-//        val annotated: Seq[Map[String, Seq[Annotation]]] = texts.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString))
+        //        val annotated: Seq[Map[String, Seq[Annotation]]] = texts.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString))
 
-//        val flatMap: Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
-//        flatMap.foreach(annotation => println(s"${annotation.result} ${annotation.metadata}"))
+        //        val flatMap: Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
+        //        flatMap.foreach(annotation => println(s"${annotation.result} ${annotation.metadata}"))
 
         "have predicted the sentence" in {
 
@@ -60,17 +61,17 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
         .option("multiLine", value = true)
         .load(path)
 
-      df.show()
+            df.show()
 
-      val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
+      //training
+            val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
+//            pipelineModel.write.overwrite().save("target/pipelineModel")
+
+//      val pipelineModel = PipelineModel.load("target/pipelineModel")
 
       "has a text with matches" should {
 
-//        val annotated: Seq[Map[String, Seq[Annotation]]] = strings.map(inputString => new LightPipeline(pipelineModel).fullAnnotate(inputString)) // model transform
-//        val flatMap: Seq[Annotation] = annotated.flatMap(map => map("sentencePrediction"))
-//        flatMap.foreach(annotation => println(s"${annotation.result} ${annotation.metadata}"))
-
-        val annotated: DataFrame =  pipelineModel.transform(df.toDF("text"))
+        val annotated: DataFrame = pipelineModel.transform(df.toDF("text"))
 
         val processed = annotated
           .select("sentencePrediction")
@@ -78,15 +79,18 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
 
         processed.show(100, false)
 
-        val annotationsPerDocuments : Array[Annotation] = processed
+        val annotationsPerDocuments: Array[Annotation] = processed
           .as[Array[Annotation]]
           .collect()
           .flatten
 
+
+        //        annotationsPerDocuments.foreach(println)
+
         val avgLogLikelihoodAverage = getAverage("avgLogLikelihood", annotationsPerDocuments)
         val durationAverage = getAverage("duration", annotationsPerDocuments)
         val perplexityAverage = getAverage("perplexity", annotationsPerDocuments)
-        val medianAverage = getAverage("medianAvg", annotationsPerDocuments)
+        val medianAverage = getAverage("medianLikelihoods", annotationsPerDocuments)
         val avgLikelihood = getAverage("avgLikelihood", annotationsPerDocuments)
 
         println("avgLogLikelihoodAverage " + avgLogLikelihoodAverage)
@@ -102,13 +106,13 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
     }
   }
 
-  def getAverage(key: String, annotationsPerDocuments : Array[Annotation]) = {
+  def getAverage(key: String, annotationsPerDocuments: Array[Annotation]) = {
     annotationsPerDocuments
       .map(language_model_annotation =>
         language_model_annotation
           .metadata
           .getOrElse(key, "0.0").toDouble
-      )
+      ).filterNot(value => value.isNaN)
       .sum / annotationsPerDocuments.length
   }
 

@@ -2,11 +2,11 @@ package com.mailytica.thesis.language.model.evaluation.annotators
 
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import com.johnsnowlabs.nlp.AnnotatorType.DOCUMENT
-import org.apache.spark.ml.util.Identifiable
+import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 
 import scala.util.matching.Regex
 
-class RedundantTextTrimmer(override val uid: String) extends AnnotatorModel[RedundantTextTrimmer]{
+class RedundantTextTrimmer(override val uid: String) extends AnnotatorModel[RedundantTextTrimmer] with DefaultParamsWritable {
 
   override val outputAnnotatorType: AnnotatorType = DOCUMENT
 
@@ -28,5 +28,9 @@ class RedundantTextTrimmer(override val uid: String) extends AnnotatorModel[Redu
 
         }
   }
+
+}
+
+object RedundantTextTrimmer extends DefaultParamsReadable[RedundantTextTrimmer] {
 
 }

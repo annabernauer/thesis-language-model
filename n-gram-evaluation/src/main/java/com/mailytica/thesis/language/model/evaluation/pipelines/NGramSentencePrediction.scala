@@ -23,12 +23,12 @@ object NGramSentencePrediction {
       .setInputCols("trimmedDocument")
       .setOutputCol("sentences")
 
-    val markedSentenceEnds = new SentenceEndMarker()
-      .setInputCols("sentences")
-      .setOutputCol("sentencesWithFlaggedEnds")
+//    val markedSentenceEnds = new SentenceEndMarker()
+//      .setInputCols("sentences")
+//      .setOutputCol("sentencesWithFlaggedEnds")
 
     val tokenizer = new Tokenizer()
-      .setInputCols("sentencesWithFlaggedEnds")
+      .setInputCols("sentences")
       .setOutputCol("token")
 
     val nGramSentenceAnnotator = new NGramSentenceEvaluation()
@@ -36,7 +36,8 @@ object NGramSentencePrediction {
       .setOutputCol("sentencePrediction")
       .setN(n)
 
-    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, markedSentenceEnds, tokenizer, nGramSentenceAnnotator)
+    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, tokenizer, nGramSentenceAnnotator)
+//    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, tokenizer)
   }
 
 }

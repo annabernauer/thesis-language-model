@@ -2,11 +2,11 @@ package com.mailytica.thesis.language.model.evaluation.annotators
 
 import com.johnsnowlabs.nlp.AnnotatorType.DOCUMENT
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel, AnnotatorType}
-import org.apache.spark.ml.util.Identifiable
+import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 
 import scala.util.matching.Regex
 
-class SentenceSplitter(override val uid: String) extends AnnotatorModel[SentenceSplitter] {
+class SentenceSplitter(override val uid: String) extends AnnotatorModel[SentenceSplitter] with DefaultParamsWritable {
 
   override val outputAnnotatorType: AnnotatorType = DOCUMENT
 
@@ -38,7 +38,32 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
           }.filterNot(sentence => sentence.result.trim.isEmpty)
 
         sentences
+          .map { sentence =>
+
+          }
+
+//        sentences
+//          .map{ sentence =>
+//
+//            val result = sentence.result
+//
+//            val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {
+//              case None => result
+//              case Some(_) => result.replaceAll("\\R", "") + SENTENCE_END
+//            }
+//
+//            println(resultWithSentenceEnd)
+//            sentence.copy(
+//              result = resultWithSentenceEnd
+//            )
+//          }
+
+        sentences
       }
 
   }
+}
+
+object SentenceSplitter extends DefaultParamsReadable[SentenceSplitter] {
+
 }

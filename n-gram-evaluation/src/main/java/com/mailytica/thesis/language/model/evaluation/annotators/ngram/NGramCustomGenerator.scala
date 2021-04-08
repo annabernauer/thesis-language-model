@@ -2,11 +2,11 @@ package com.mailytica.thesis.language.model.evaluation.annotators.ngram
 
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, DOCUMENT, TOKEN}
-import com.mailytica.thesis.language.model.evaluation.annotators.RedundantTextTrimmer
+import com.mailytica.thesis.language.model.evaluation.annotators.{RedundantTextTrimmer, SentenceSplitter}
 import org.apache.spark.ml.param.Param
-import org.apache.spark.ml.util.Identifiable
+import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 
-class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGramCustomGenerator] {
+class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGramCustomGenerator] with DefaultParamsWritable {
 
   override val outputAnnotatorType: AnnotatorType = TOKEN
 
@@ -58,4 +58,8 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
     ngramsAnnotation.annotations
 
   }
+}
+
+object NGramCustomGenerator extends DefaultParamsReadable[NGramCustomGenerator] {
+
 }

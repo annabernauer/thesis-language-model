@@ -7,7 +7,7 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Dataset
 
-class NGramSentenceEvaluation (override val uid: String) extends AnnotatorApproach[NGramSentenceEvaluationModel]{
+class NGramSentenceEvaluation (override val uid: String) extends AnnotatorApproach[NGramSentenceEvaluationModel] {
 
   override val description: String = "NGRAM_SENTENCE_EVALUATION"
 
@@ -29,10 +29,18 @@ class NGramSentenceEvaluation (override val uid: String) extends AnnotatorApproa
       .setOutputCol("ngramsProbability")
       .setN($(n))
 
-    val model = nGramEvaluation.train(dataset)
+    val model : NGramEvaluationModel = nGramEvaluation.train(dataset)
+
+
+    val sequencesArray : Array[(String, Int)] = model.getSequences.toArray             //important for having the same index in SequenceKeys and SequenceValues
+    val historiesArray : Array[(String, Int)] = model.getHistories.toArray             //important for having the same index in historyKeys and historyValues
 
     new NGramSentenceEvaluationModel()
-      .setNGramEvaluationModel(model)
+      .setSequenceKeys(sequencesArray.map(_._1))
+      .setSequenceValues(sequencesArray.map(_._2))
+      .setHistoryKeys(historiesArray.map(_._1))
+      .setHistoryValues(historiesArray.map(_._2))
+      .setDictionary(model.getDictionary.toArray)
 
   }
 
