@@ -40,13 +40,13 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
 
   setDefault(this.n, 3)
 
-  override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
+  lazy val nGramEvaluationModel = new NGramEvaluationModel()
+    .setSequences($(sequenceKeys).zip($(sequenceValues)).toMap)
+    .setHistories($(historyKeys).zip($(historyValues)).toMap)
+    .setDictionary($(dictionaryArray).toSet)
+    .setN($(n))
 
-    val nGramEvaluationModel = new NGramEvaluationModel()
-      .setSequences($(sequenceKeys).zip($(sequenceValues)).toMap)
-      .setHistories($(historyKeys).zip($(historyValues)).toMap)
-      .setDictionary($(dictionaryArray).toSet)
-      .setN($(n))
+  override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
     val startTime = System.nanoTime
     val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n))
