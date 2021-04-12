@@ -25,7 +25,7 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
   def setNGramMinimum(value: Int): this.type = set(this.nGramMinimum, value)
 
   def setDelimiter(value: String): this.type = {
-    require(value.length == 1, "Delimiter should have length == 1")
+//    require(value.length == 1, "Delimiter should have length == 1")
     set(delimiter, value)
   }
 

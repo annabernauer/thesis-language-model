@@ -19,9 +19,15 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
 
   "A text" when {
 
-    ResourceHelper.spark
+    val spark = SparkSession
+      .builder
+      .config("spark.driver.maxResultSize", "5g")
+      .config("spark.driver.memory", "12g")
+      .config("spark.sql.codegen.wholeStage", "false") // deactivated as the compiled grows to big (exception)
+      .master(s"local[3]")
+      .getOrCreate()
 
-    import ResourceHelper.spark.implicits._
+    import spark.implicits._
 
     val nlpPipeline = new Pipeline()
 
@@ -61,13 +67,13 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
         .option("multiLine", value = true)
         .load(path)
 
-            df.show()
+//            df.show()
 
       //training
-            val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
+//            val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
 //            pipelineModel.write.overwrite().save("target/pipelineModel")
 
-//      val pipelineModel = PipelineModel.load("target/pipelineModel")
+      val pipelineModel = PipelineModel.load("target/pipelineModel")
 
       "has a text with matches" should {
 

@@ -38,25 +38,19 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
           }.filterNot(sentence => sentence.result.trim.isEmpty)
 
         sentences
-          .map { sentence =>
+          .map{ sentence =>
 
+            val result = sentence.result
+
+            val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {            // essential for sentence prediction, because otherwise not finished sentences are getting terminated and sentence completion isn't possible
+              case None => result
+              case Some(_) => result.replaceAll("\\R", "") + SENTENCE_END
+            }
+
+            sentence.copy(
+              result = resultWithSentenceEnd
+            )
           }
-
-//        sentences
-//          .map{ sentence =>
-//
-//            val result = sentence.result
-//
-//            val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {
-//              case None => result
-//              case Some(_) => result.replaceAll("\\R", "") + SENTENCE_END
-//            }
-//
-//            println(resultWithSentenceEnd)
-//            sentence.copy(
-//              result = resultWithSentenceEnd
-//            )
-//          }
 
         sentences
       }

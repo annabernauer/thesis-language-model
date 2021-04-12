@@ -29,9 +29,11 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
   val dictionaryArray: StringArrayParam = new StringArrayParam(this, "dictionary", "")
 
   def setHistoryKeys(value: Array[String]): this.type = set(historyKeys, value)
+
   def setHistoryValues(value: Array[Int]): this.type = set(historyValues, value)
 
   def setSequenceKeys(value: Array[String]): this.type = set(sequenceKeys, value)
+
   def setSequenceValues(value: Array[Int]): this.type = set(sequenceValues, value)
 
   def setDictionary(value: Array[String]): this.type = set(dictionaryArray, value)
@@ -56,23 +58,33 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
       nGramsWithProbability
         .map(annotation => annotation.metadata.getOrElse("probability", "0.0").toDouble)
 
-//    val likelihoods2: Seq[(Double, Double, String)] =
-//      nGramsWithProbability
-//        .map(annotation => {
-//          val likelih = annotation.metadata.getOrElse("probability", "0.0").toDouble
-//          (likelih, 1 / likelih, annotation.result)
-//        })
-
-
 
     val invertedLikelihoods: Seq[Double] = likelihoods.map(likelihood => 1 / likelihood)
-    val perplexity: Double = Math.pow(invertedLikelihoods.product, 1 / invertedLikelihoods.size.toDouble)
-//    likelihoods2.foreach(a => println(a._1 + " " + a._2 + " " + a._3))
-//    invertedLikelihoods.foreach(println)
-//    println("produkt " + invertedLikelihoods.product)
-//    println("size " + 1 / invertedLikelihoods.size.toDouble)
 
-//    println()
+    //    invertedLikelihoods.foreach(println)
+
+    val perplexity: Double = invertedLikelihoods.map(lh => Math.pow(lh, 1 / invertedLikelihoods.size.toDouble)).product
+
+    if (perplexity.isInfinite) {
+      //      invertedLikelihoods.foreach(println)
+      //      likelihoods.foreach(println)
+
+      //      val likelihoods2: Seq[(Double, String)] =
+//        nGramsWithProbability
+//          .map(annotation => {
+//            val likelih = annotation.metadata.getOrElse("probability", "0.0").toDouble
+//            (1 / likelih, annotation.result)
+//          })
+//      likelihoods2.foreach(println)
+      println("WARNING perplexity is infinite")
+    }
+
+    //    likelihoods2.foreach(a => println(a._1 + " " + a._2 + " " + a._3))
+    //    invertedLikelihoods.foreach(println)
+    //    println("produkt " + invertedLikelihoods.product)
+    //    println("size " + 1 / invertedLikelihoods.size.toDouble)
+
+    //    println()
 
     val avgLogLikelihood: Double =
       likelihoods
@@ -112,8 +124,8 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
       .setInputCols("tokens")
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
-      .setNGramMinimum(2)                                           //generated ngrams aren't allowed to have a length n < 2 (has to be n - 1 > 0 )
-//      .setEnableCumulative(false)
+      .setNGramMinimum(2) //generated ngrams aren't allowed to have a length n < 2 (has to be n - 1 > 0 )
+      //      .setEnableCumulative(false)
       .setDelimiter(DELIMITER)
 
     nGramModel.annotate(tokens)

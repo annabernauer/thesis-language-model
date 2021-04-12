@@ -48,12 +48,17 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
 
       val historyString =
         ngram
-          .split("\\" + DELIMITER)
+          .split(DELIMITER)
           .dropRight(1)
           .mkString(DELIMITER)
+
       val likelihood: Double = historyString.length match {
         case 0 => 0.0                                             //n is to small, has to be n > 1 (because n - 1 > 0 )
         case _ =>Try {
+          val i = $$(histories).getOrElse[Int](historyString, 0)
+          if (i == 0) {
+            println("################## " + historyString + " ############## " + ngram + " "+ $$(sequences).getOrElse[Int](ngram, 0).toDouble)
+          }
           $$(sequences).getOrElse[Int](ngram, 0).toDouble / $$(histories).getOrElse[Int](historyString, 0).toDouble
         }.getOrElse(0.0)
       }
