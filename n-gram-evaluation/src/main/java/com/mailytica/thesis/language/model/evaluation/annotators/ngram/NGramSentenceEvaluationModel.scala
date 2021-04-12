@@ -53,7 +53,7 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
     val startTime = System.nanoTime
     val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n))
     val nGramsWithProbability: Seq[Annotation] = nGrams.flatMap(annotation => nGramEvaluationModel.annotate(Seq(annotation)))
-    val duration = (System.nanoTime - startTime) / 1e9d
+    val durationInSeconds = (System.nanoTime - startTime) / 1e9d
     val likelihoods: Seq[Double] =
       nGramsWithProbability
         .map(annotation => annotation.metadata.getOrElse("probability", "0.0").toDouble)
@@ -85,7 +85,7 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
         "avgLogLikelihood" -> avgLogLikelihood.toString,
         "avgLikelihood" -> avgLikelihood.toString,
         "medianLikelihoods" -> medianLikelihoods.toString,
-        "duration" -> duration.toString)
+        "duration" -> durationInSeconds.toString)
     ))
   }
 

@@ -52,6 +52,8 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
           .dropRight(1)
           .mkString(DELIMITER)
 
+      println($$(sequences).getOrElse[Int](ngram, 0).toDouble + " ################## " + $$(histories).getOrElse[Int](historyString, 0).toDouble)
+
       val likelihood: Double = historyString.length match {
         case 0 => 0.0                                             //n is to small, has to be n > 1 (because n - 1 > 0 )
         case _ =>Try {
@@ -59,7 +61,7 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
         }.getOrElse(0.0)
       }
 
-      if (likelihood.isInfinite) {
+      if (likelihood.isInfinite || likelihood.isNaN) {
         0.0
       } else {
         likelihood
@@ -70,7 +72,6 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
       .lastOption
       .map(ngram => getLikelihood(ngram.result))
       .getOrElse(0.0)
-
 
     annotations
       .lastOption

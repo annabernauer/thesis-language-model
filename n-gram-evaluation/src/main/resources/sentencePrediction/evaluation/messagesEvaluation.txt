@@ -1,0 +1,36 @@
+messages.csv
+
+n = 6
+avgLogLikelihoodAverage 	-0.7743465251882359
+duration avg 				0.00226063557632766
+perplexityAverage 			2.5993765001619193
+median avg 					0.907018262057661
+avgLikelihood 				0.7290097765276325
+
+n = 5
+avgLogLikelihoodAverage 	-0.9042881118592858
+duration avg 				0.001427386052546217
+perplexityAverage 			3.03389014624598
+median avg 					0.8473959070310614
+avgLikelihood 				0.6903334943700478
+
+n = 4
+avgLogLikelihoodAverage 	-1.1069827044764005
+duration avg 				0.0010430080175743814
+perplexityAverage 			3.9206480727826634
+median avg 					0.7543032693802627
+avgLikelihood 				0.6323744268306773
+
+n = 3
+avgLogLikelihoodAverage 	-1.4135464980629
+duration avg 				5.562209624627725E-4
+perplexityAverage 			5.976946589254178
+median avg 					0.5844982489684087
+avgLikelihood 				0.5475913265885088
+
+n = 2
+avgLogLikelihoodAverage 	-2.006465042301125
+duration avg 				2.640750184295083E-4
+perplexityAverage 			14.288409031593204
+median avg 					0.3216464990882841
+avgLikelihood 				0.4047951305515579

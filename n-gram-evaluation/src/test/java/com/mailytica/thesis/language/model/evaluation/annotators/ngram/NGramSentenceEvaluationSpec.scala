@@ -5,7 +5,7 @@ import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.mailytica.thesis.language.model.evaluation.pipelines.NGramSentencePrediction.getStages
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpec}
@@ -32,7 +32,6 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
     val nlpPipeline = new Pipeline()
 
 
-
     "is trained with more data" when {
       nlpPipeline.setStages(getStages(5))
 
@@ -56,7 +55,8 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
       }
     }
     "is trained with big data" when {
-      nlpPipeline.setStages(getStages(5))
+      val n = 8
+      nlpPipeline.setStages(getStages(n))
 
       val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
 
@@ -67,13 +67,10 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
         .option("multiLine", value = true)
         .load(path)
 
-//            df.show()
-
       //training
-//            val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
-//            pipelineModel.write.overwrite().save("target/pipelineModel")
-
-      val pipelineModel = PipelineModel.load("target/pipelineModel")
+      val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
+      //            pipelineModel.write.overwrite().save("target/pipelineModel")
+      //      val pipelineModel = PipelineModel.load("target/pipelineModel")
 
       "has a text with matches" should {
 
@@ -90,20 +87,19 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
           .collect()
           .flatten
 
-
-        //        annotationsPerDocuments.foreach(println)
-
         val avgLogLikelihoodAverage = getAverage("avgLogLikelihood", annotationsPerDocuments)
         val durationAverage = getAverage("duration", annotationsPerDocuments)
         val perplexityAverage = getAverage("perplexity", annotationsPerDocuments)
         val medianAverage = getAverage("medianLikelihoods", annotationsPerDocuments)
         val avgLikelihood = getAverage("avgLikelihood", annotationsPerDocuments)
 
-        println("avgLogLikelihoodAverage " + avgLogLikelihoodAverage)
-        println("duration avg " + durationAverage)
-        println("perplexityAverage " + perplexityAverage)
-        println("median avg " + medianAverage)
-        println("avgLikelihood " + avgLikelihood)
+        println(s"n = $n")
+        println("avgLogLikelihoodAverage \t" + avgLogLikelihoodAverage)
+        println("duration avg \t\t\t\t" + durationAverage)
+        println("perplexityAverage \t\t\t" + perplexityAverage)
+        println("median avg \t\t\t\t\t" + medianAverage)
+        println("avgLikelihood \t\t\t\t" + avgLikelihood)
+        println(s"documentscount ${annotationsPerDocuments.length}")
 
         "have predicted the sentence" in {
 
