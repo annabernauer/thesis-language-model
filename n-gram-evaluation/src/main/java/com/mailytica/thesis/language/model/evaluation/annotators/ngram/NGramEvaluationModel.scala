@@ -35,7 +35,9 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
   def getN: Int = $(n)
 
   def getHistories: Map[String, Int] = $$(histories)
+
   def getSequences: Map[String, Int] = $$(sequences)
+
   def getDictionary: Set[String] = $$(dictionary)
 
   setDefault(this.n, 3)
@@ -46,18 +48,28 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
 
     def getLikelihood(ngram: String): Double = {
 
-      val historyString =
-        ngram
-          .split(DELIMITER)
-          .dropRight(1)
-          .mkString(DELIMITER)
+//            val historyString =
+//              ngram
+//                .split(DELIMITER)
+//                .dropRight(1)
+//                .mkString(DELIMITER)
 
-      println($$(sequences).getOrElse[Int](ngram, 0).toDouble + " ################## " + $$(histories).getOrElse[Int](historyString, 0).toDouble)
+      val allNgrams: Seq[String] = getAllNgrams(Seq(ngram))       //for smoothing
 
-      val likelihood: Double = historyString.length match {
-        case 0 => 0.0                                             //n is to small, has to be n > 1 (because n - 1 > 0 )
-        case _ =>Try {
-          $$(sequences).getOrElse[Int](ngram, 0).toDouble / $$(histories).getOrElse[Int](historyString, 0).toDouble
+      val likelihood: Double = allNgrams.length match {
+        case 1 => 0.0 //n is to small, has to be n > 1 (because n - 1 > 0 )
+        case _ => Try {
+          val nGramProbabilities: List[Double] =
+            List.range(0, allNgrams.length - 1)
+              .map((index) =>
+                $$(sequences).getOrElse[Int](allNgrams(index), 0).toDouble / $$(histories).getOrElse[Int](allNgrams(index + 1), 0).toDouble)
+          val withoutInfinite = nGramProbabilities.filter(x => !x.isInfinite)
+          val probability: Double = withoutInfinite.sum * (1 / nGramProbabilities.length.toDouble)
+//                    $$(sequences).getOrElse[Int](ngram, 0).toDouble / $$(histories).getOrElse[Int](historyString, 0).toDouble
+          if (probability == 0.0) {
+            println(nGramProbabilities + " " + allNgrams)
+          }
+          probability
         }.getOrElse(0.0)
       }
 
@@ -78,6 +90,21 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
       .map(annotation => annotation.copy(metadata = annotation.metadata + ("probability" -> likelihood.toString))).toSeq
   }
 
+  def getAllNgrams(ngramSeq: Seq[String]): Seq[String] = {
+    val splittedNgram = ngramSeq.last
+      .split(DELIMITER)
+
+    if (splittedNgram.length <= 1) {
+      return ngramSeq
+    }
+
+    val nMinusOneGram =
+      splittedNgram
+        .dropRight(1)
+        .mkString(DELIMITER)
+
+    getAllNgrams(ngramSeq ++ Seq(nMinusOneGram))
+  }
 }
 
 object NGramEvaluationModel extends DefaultParamsReadable[NGramEvaluationModel] {
