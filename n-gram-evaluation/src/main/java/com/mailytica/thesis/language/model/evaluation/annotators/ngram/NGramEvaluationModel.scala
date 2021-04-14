@@ -7,6 +7,8 @@ import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 
+import scala.collection.immutable
+import scala.runtime.Tuple2Zipped
 import scala.util.Try
 
 class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGramEvaluationModel] with DefaultParamsWritable {
@@ -48,13 +50,7 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
 
     def getLikelihood(ngram: String): Double = {
 
-//            val historyString =
-//              ngram
-//                .split(DELIMITER)
-//                .dropRight(1)
-//                .mkString(DELIMITER)
-
-      val allNgrams: Seq[String] = getAllNgrams(Seq(ngram))       //for smoothing
+      val allNgrams: Seq[String] = getAllNgrams(Seq(ngram)) //for smoothing
 
       val likelihood: Double = allNgrams.length match {
         case 1 => 0.0 //n is to small, has to be n > 1 (because n - 1 > 0 )
@@ -63,12 +59,17 @@ class NGramEvaluationModel(override val uid: String) extends AnnotatorModel[NGra
             List.range(0, allNgrams.length - 1)
               .map((index) =>
                 $$(sequences).getOrElse[Int](allNgrams(index), 0).toDouble / $$(histories).getOrElse[Int](allNgrams(index + 1), 0).toDouble)
-          val withoutInfinite = nGramProbabilities.filter(x => !x.isInfinite)
-          val probability: Double = withoutInfinite.sum * (1 / nGramProbabilities.length.toDouble)
-//                    $$(sequences).getOrElse[Int](ngram, 0).toDouble / $$(histories).getOrElse[Int](historyString, 0).toDouble
-          if (probability == 0.0) {
-            println(nGramProbabilities + " " + allNgrams)
-          }
+
+          val nGramProbabilitiesWithoutInfinite: Seq[Double] = nGramProbabilities.map {
+            case v if v.isInfinite => 0.0 //is infinite when divided by zero
+            case v => v }
+
+          val soonToBeMultiplicators: Seq[Double] = Range.inclusive(2, $(n)).map(index => index / nGramProbabilities.length.toDouble)
+          val sumMultiplicators = soonToBeMultiplicators.sum
+          val finalMultiplicators = soonToBeMultiplicators.map(multiplicator => multiplicator / sumMultiplicators)                                            //(n/N)/SUM(n/N)
+
+          val probability: Double = (nGramProbabilitiesWithoutInfinite, finalMultiplicators).zipped.map {case (nGramProbability, multiplicator) => nGramProbability * multiplicator }.sum
+
           probability
         }.getOrElse(0.0)
       }

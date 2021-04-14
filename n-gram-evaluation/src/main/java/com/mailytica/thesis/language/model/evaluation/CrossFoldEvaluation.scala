@@ -3,8 +3,10 @@ package com.mailytica.thesis.language.model.evaluation
 import com.johnsnowlabs.nlp.Annotation
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.mailytica.thesis.language.model.evaluation.pipelines.NGramSentencePrediction.getStages
+import com.mailytica.thesis.language.model.evaluation.returnTypes.{AvgLogLikelihood, Duration, Likelihood, LikelihoodMedian, MetadataTypes, Perplexity, PerplexityMedian}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+
 
 object CrossFoldEvaluation {
 
@@ -20,10 +22,10 @@ object CrossFoldEvaluation {
     import spark.implicits._
 
     val nlpPipeline = new Pipeline()
-    val n = 5
+    val n = 4
     nlpPipeline.setStages(getStages(n))
 
-    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/nGramTesting/messages.csv"
+    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
 
     val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
       .option("header", "true")
@@ -32,88 +34,100 @@ object CrossFoldEvaluation {
       .option("multiLine", value = true)
       .load(path)
 
-    val splitArray = df.randomSplit(Array(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1))
+    val splitArray: Array[Dataset[Row]] = df.randomSplit(Array(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1))
 
-    val allCrossFoldValues: List[(Double, Double, Double, Double, Double)] = List.range(0, 1).map { index =>
-      val testData: DataFrame = splitArray(index)
-      val trainingData: DataFrame = splitArray
-        .diff(Array(testData)) //remove
-        .reduce(_ union _)
+    val allCrossFoldValues: Array[MetadataTypes] =
+      splitArray
+        .take(1)
+        .map { testData =>
 
-      //      testData.show()
-      //      println("#############################")
-      //      trainingData.show()
+          val trainingData: DataFrame = splitArray
+            .diff(Array(testData)) //remove testData
+            .reduce(_ union _)
 
-      val pipelineModel: PipelineModel = nlpPipeline.fit(trainingData.toDF("text"))
-      val annotated: DataFrame = pipelineModel.transform(testData.toDF("text"))
+          val pipelineModel: PipelineModel = nlpPipeline.fit(trainingData.toDF("text"))
+          val annotated: DataFrame = pipelineModel.transform(testData.toDF("text"))
 
-      val processed = annotated
-        .select("sentencePrediction")
-        .cache()
+          val processed = annotated
+            .select("sentencePrediction")
+            .cache()
 
-//      processed.show(100, false)
+          //      processed.show(100, false)
 
-      val annotationsPerDocuments: Array[Annotation] = processed
-        .as[Array[Annotation]]
-        .collect()
-        .flatten
+          val annotationsPerDocuments: Array[Annotation] = processed
+            .as[Array[Annotation]]
+            .collect()
+            .flatten
 
-      getCalculations(annotationsPerDocuments, index)
-    }
-    val crossFoldAverage : (Double, Double, Double, Double, Double) =
-      allCrossFoldValues.reduce((a,b) =>
-        ((a._1 + b._1) / splitArray.length.toDouble,
-        (a._2 + b._2) / splitArray.length.toDouble,
-        (a._3 + b._3) / splitArray.length.toDouble,
-        (a._4 + b._4) / splitArray.length.toDouble,
-        (a._5 + b._5) / splitArray.length.toDouble))
+          getCalculations(annotationsPerDocuments)
+        }
 
-    val mapValues : Map[String, Double] = Map("avgLogLikelihoodAverage" -> crossFoldAverage._1,
-      "durationAverage" -> crossFoldAverage._2,
-      "perplexityAverage" -> crossFoldAverage._3,
-      "medianAverage" -> crossFoldAverage._4,
-      "avgLikelihood" -> crossFoldAverage._5)
 
-    println("#######################################################################")
+    printAllFolds(allCrossFoldValues)
     println(s"n = $n")
-    mapValues.foreach(value => println(s"${value._1} ${value._2}"))
 
   }
 
-  def getCalculations(annotationsPerDocuments: Array[Annotation], index: Int) = {
-    val avgLogLikelihoodAverage = getAverage("avgLogLikelihood", annotationsPerDocuments)
-    val durationAverage = getAverage("duration", annotationsPerDocuments)
-    val perplexityAverage = getAverage("perplexity", annotationsPerDocuments)
-    val medianAverage = getAverage("medianLikelihoods", annotationsPerDocuments)
-    val avgLikelihood = getAverage("avgLikelihood", annotationsPerDocuments)
+  def getCalculations(annotationsPerDocuments: Array[Annotation]) = {
 
-    println("###########################################################")
-    println(s"index $index")
-    println("avgLogLikelihoodAverage \t" + avgLogLikelihoodAverage)
-    println("duration avg \t\t\t\t" + durationAverage)
-    println("perplexityAverage \t\t\t" + perplexityAverage)
-    println("median avg \t\t\t\t\t" + medianAverage)
-    println("avgLikelihood \t\t\t\t" + avgLikelihood)
-    println(s"documentsCount ${annotationsPerDocuments.length}")
+    val avgLogLikelihoodAverage = AvgLogLikelihood(getAverage("avgLogLikelihood", annotationsPerDocuments))
+    val durationAverage = Duration(getAverage("duration", annotationsPerDocuments))
+    val likelihoodAverage = Likelihood(getAverage("avgLikelihood", annotationsPerDocuments))
+    val likelihoodMedian = LikelihoodMedian(getAverage("medianLikelihoods", annotationsPerDocuments))
+    val perplexityAverage = Perplexity(getAverage("perplexity", annotationsPerDocuments))
+    val perplexityMedian = PerplexityMedian(medianCalculator(getMapByKey("perplexity", annotationsPerDocuments)))
 
-    val calculations = (avgLogLikelihoodAverage,
+    val calculations = MetadataTypes(
+      avgLogLikelihoodAverage,
       durationAverage,
+      likelihoodAverage,
+      likelihoodMedian,
       perplexityAverage,
-      medianAverage,
-      avgLikelihood)
+      perplexityMedian
+    )
+
+    println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    calculations.productIterator.foreach(x => println(s"$x"))
 
     calculations
   }
 
+  def printAllFolds(allCrossFoldValues: Array[MetadataTypes]) = {
+    val allFoldsAvgLogLikelihood: AvgLogLikelihood = AvgLogLikelihood(allCrossFoldValues.map(_.avgLogLikelihood.value).sum / allCrossFoldValues.length)
+    val allFoldsDuration: Duration = Duration(allCrossFoldValues.map(_.duration.value).sum / allCrossFoldValues.length)
+    val allFoldsLikelihood: Likelihood = Likelihood(allCrossFoldValues.map(_.likelihood.value).sum / allCrossFoldValues.length)
+    val allFoldsLikelihoodMedian: LikelihoodMedian = LikelihoodMedian(allCrossFoldValues.map(_.likelihoodMedian.value).sum / allCrossFoldValues.length)
+    val allFoldsPerplexity: Perplexity = Perplexity(allCrossFoldValues.map(_.perplexity.value).sum / allCrossFoldValues.length)
+    val allFoldsPerplexityMedian: PerplexityMedian = PerplexityMedian(allCrossFoldValues.map(_.perplexityMedian.value).sum / allCrossFoldValues.length)
 
-  def getAverage(key: String, annotationsPerDocuments: Array[Annotation]) = {
+    val allFolds = MetadataTypes(allFoldsAvgLogLikelihood, allFoldsDuration, allFoldsLikelihood ,allFoldsLikelihoodMedian, allFoldsPerplexity, allFoldsPerplexityMedian)
+
+    println("##################################################################################")
+    allFolds.productIterator.foreach(println)
+  }
+
+  def getMapByKey(key: String, annotationsPerDocuments: Array[Annotation]) = {
     annotationsPerDocuments
       .map(language_model_annotation =>
         language_model_annotation
           .metadata
           .getOrElse(key, "0.0").toDouble
       ).filterNot(value => value.isNaN)
+  }
+
+
+  def getAverage(key: String, annotationsPerDocuments: Array[Annotation]) = {
+    getMapByKey(key, annotationsPerDocuments)
       .sum / annotationsPerDocuments.length
+  }
+
+  def medianCalculator(seq: Seq[Double]): Double = {
+    val sortedSeq: Seq[Double] = seq.sortWith(_ < _)
+    if (seq.size % 2 == 1) sortedSeq(sortedSeq.size / 2)
+    else {
+      val (up: Seq[Double], down: Seq[Double]) = sortedSeq.splitAt(seq.size / 2)
+      (up.lastOption.getOrElse(0.0) + down.headOption.getOrElse(0.0)) / 2
+    }
   }
 
 }
