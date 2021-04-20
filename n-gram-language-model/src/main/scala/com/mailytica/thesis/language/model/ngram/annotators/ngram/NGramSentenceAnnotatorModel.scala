@@ -19,6 +19,8 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
 
   val SENTENCE_END: String = "<SENTENCE_END>"
 
+  val SENTENCE_START: String = "<SENTENCE_START>"
+
   val nGramAnnotatorModel: Param[NGramAnnotatorModel] = new Param(this, "nGramAnnotatorModel", "")
 
   def setN(value: Int): this.type = set(this.n, value)
@@ -65,7 +67,7 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
       }
     }
 
-    loop(annotations).filterNot(token => token.result =="<SENTENCE_END>")
+    loop(annotations).filterNot(token => (token.result == SENTENCE_END) || (token.result == SENTENCE_START))
 
   }
 

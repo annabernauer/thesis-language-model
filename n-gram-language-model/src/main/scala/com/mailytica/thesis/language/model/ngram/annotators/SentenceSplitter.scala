@@ -14,8 +14,6 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
 
   def this() = this(Identifiable.randomUID("SENTENCE_SPLITTER"))
 
-  val SENTENCE_END: String = " <SENTENCE_END>"
-
   val REGEX_SENTENCE_END: Regex = "(\\.|:|\\R|\\?|\\!|$)".r()
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {

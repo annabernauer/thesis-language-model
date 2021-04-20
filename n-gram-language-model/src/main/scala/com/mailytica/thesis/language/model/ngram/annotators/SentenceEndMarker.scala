@@ -17,29 +17,31 @@ class SentenceEndMarker(override val uid: String) extends AnnotatorModel[Sentenc
 
   val SENTENCE_END: String = " <SENTENCE_END>"
 
+  val SENTENCE_START: String = "<SENTENCE_START> "
+
   val REGEX_SENTENCE_END: Regex = "(\\.|\\!|\\?|\\:|\\R)$".r
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
     annotations
-//      .map(sentence => sentence.copy(result = sentence.result.replaceAll("\\R", SENTENCE_END)))
-      .map{ sentence =>
+      //      .map(sentence => sentence.copy(result = sentence.result.replaceAll("\\R", SENTENCE_END)))
+      .map { sentence =>
 
-      val result = sentence.result
+        val result = SENTENCE_START + sentence.result
 
-      val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {
-        case None => result
-        case Some(_) => result.replaceAll("\\R", "") + SENTENCE_END
+        val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {
+          case None => result
+          case Some(_) => result.replaceAll("\\R", "") + SENTENCE_END
+        }
+
+        //      println("resultWithSentenceEnd")
+        //      println(resultWithSentenceEnd)
+        sentence.copy(
+
+          result = resultWithSentenceEnd
+        )
       }
-
-//      println("resultWithSentenceEnd")
-//      println(resultWithSentenceEnd)
-      sentence.copy(
-
-        result = resultWithSentenceEnd
-      )
-    }
-//      .filterNot(sentence => sentence.result.startsWith(SENTENCE_END))
+    //      .filterNot(sentence => sentence.result.startsWith(SENTENCE_END))
   }
 
 }

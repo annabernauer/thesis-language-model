@@ -16,6 +16,8 @@ class SentenceEndMarker(override val uid: String) extends AnnotatorModel[Sentenc
 
   val SENTENCE_END: String = " <SENTENCE_END>"
 
+  val SENTENCE_START: String = "SENTENCE_START> "
+
   val REGEX_SENTENCE_END: Regex = "(\\.|\\!|\\?|\\:|\\R)$".r
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
@@ -23,7 +25,7 @@ class SentenceEndMarker(override val uid: String) extends AnnotatorModel[Sentenc
     annotations
       .map{ sentence =>
 
-      val result = sentence.result
+      val result = SENTENCE_START + sentence.result
 
       val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {
         case None => result
