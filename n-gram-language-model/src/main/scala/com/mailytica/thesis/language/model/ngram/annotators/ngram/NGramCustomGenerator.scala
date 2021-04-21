@@ -2,6 +2,7 @@ package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
+import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 
@@ -20,12 +21,11 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
   def setN(value: Int): this.type = set(this.n, value)
 
   def setDelimiter(value: String): this.type = {
-    require(value.length == 1, "Delimiter should have length == 1")
     set(delimiter, value)
   }
 
   setDefault(this.n -> 3,
-    this.delimiter -> " ")
+    this.delimiter -> DELIMITER)
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 

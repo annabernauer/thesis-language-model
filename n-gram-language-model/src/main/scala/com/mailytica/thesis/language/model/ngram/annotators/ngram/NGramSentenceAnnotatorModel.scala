@@ -50,7 +50,7 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
 //        }
 //        .getOrElse(Seq.empty)
 
-      joinedAnnotations.lastOption match {
+      joinedAnnotations.lastOption match {                                                                      //just for termination condition
         case Some(annotation) =>
           annotation.result match {
             case SENTENCE_END => joinedAnnotations

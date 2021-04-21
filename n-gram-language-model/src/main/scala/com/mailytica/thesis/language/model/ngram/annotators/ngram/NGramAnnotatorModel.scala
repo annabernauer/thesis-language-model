@@ -4,6 +4,7 @@ import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
+import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 
@@ -44,7 +45,7 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
       def getTokenWithLikelihood(token: String): (String, Double) = {
 
         val likelihood: Double = Try {
-          $$(sequences).getOrElse[Int](s"${ngram.result} $token", 0).toDouble / $$(histories).getOrElse[Int](ngram.result, 0).toDouble
+          $$(sequences).getOrElse[Int](s"${ngram.result}$DELIMITER$token", 0).toDouble / $$(histories).getOrElse[Int](ngram.result, 0).toDouble
         }.getOrElse(0.0)
         (token, likelihood)
       }

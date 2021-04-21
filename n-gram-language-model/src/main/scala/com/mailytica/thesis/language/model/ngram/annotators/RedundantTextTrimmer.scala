@@ -16,13 +16,15 @@ class RedundantTextTrimmer(override val uid: String) extends AnnotatorModel[Redu
 
   val REGEX_FOOTER : String = "(?i)(Mit freundlichen Grüßen|Viele Grüße|Beste Grüße|Liebe Grüße|freundliche Grüße|With kind regards)[^*]*" //Doesn't work with ^ for occurrences on the start of a line
 
+  val REGEX_LINK : String = "https:\\/\\/([^\\s]+)|http:\\/\\/([^\\s]+)"
+
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
     annotations.map{
 
       annotation =>
         val result : String = annotation.result
-        val trimmedResult : String = result.replaceAll(REGEX_FOOTER, "")
+        val trimmedResult : String = result.replaceAll(REGEX_FOOTER, "").replaceAll(REGEX_LINK, "")
 
         annotation.copy(result = trimmedResult)
 

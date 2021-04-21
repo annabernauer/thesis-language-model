@@ -1,7 +1,6 @@
 package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
 import java.io.File
-
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorApproach}
@@ -10,6 +9,7 @@ import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Dataset
+import com.mailytica.thesis.language.model.util.Utility.{DELIMITER, printToFile}
 
 class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAnnotatorModel] {
 
@@ -59,6 +59,9 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
     }
     printToFile(new File("target\\sentencePrediction\\sequencesMap.txt")) { p =>
       sequencesMap.foreach(p.println)
+    }
+    printToFile(new File("target\\sentencePrediction\\sequencesKeys.txt")) { p =>
+      sequencesMap.keys.foreach(p.println)
     }
 
     new NGramAnnotatorModel()
