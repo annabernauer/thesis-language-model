@@ -21,13 +21,13 @@ object ExecutableSentencePrediction {
 
     val nlpPipeline = new Pipeline()
 
-    nlpPipeline.setStages(getStages(5))
+    nlpPipeline.setStages(getStages(7))
 
     val texts : Seq[String] = getResourceText("/sentencePrediction/textsForTraining/productionRelease")
 
     val texts2 : Seq[String] = getResourceText("/sentencePrediction/textsForTraining/shippingNotification")
 
-    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
+    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messagesSmall.csv"
 
     val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
       .option("header", "true")

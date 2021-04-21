@@ -14,7 +14,7 @@ class RedundantTextTrimmer(override val uid: String) extends AnnotatorModel[Redu
 
   def this() = this(Identifiable.randomUID("REDUNDANT_TEXT_TRIMMER"))
 
-  val REGEX_FOOTER : String = "(?i)(Mit freundlichen Grüßen|Viele Grüße|Beste Grüße|Liebe Grüße|freundliche Grüße|With kind regards)[^*]*" //Doesn't work with ^ for occurrences on the start of a line
+  val REGEX_FOOTER : String = "(?i)(Mit freundlichen Grüßen|Viele Grüße|Beste Grüße|Liebe Grüße|freundliche Grüße|With kind regards|Best regards)[^*]*" //Doesn't work with ^ for occurrences on the start of a line
 
   val REGEX_LINK : String = "https:\\/\\/([^\\s]+)|http:\\/\\/([^\\s]+)"
 

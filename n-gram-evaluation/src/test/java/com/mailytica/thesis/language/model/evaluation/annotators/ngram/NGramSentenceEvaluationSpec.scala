@@ -55,10 +55,10 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
       }
     }
     "is trained with big data" when {
-      val n = 8
+      val n = 7
       nlpPipeline.setStages(getStages(n))
 
-      val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
+      val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messagesSmall.csv"
 
       val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
         .option("header", "true")

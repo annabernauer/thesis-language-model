@@ -22,7 +22,7 @@ object CrossFoldEvaluation {
     import spark.implicits._
 
     val nlpPipeline = new Pipeline()
-    val n = 4
+    val n = 5
     nlpPipeline.setStages(getStages(n))
 
     val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messagesSmall.csv"
