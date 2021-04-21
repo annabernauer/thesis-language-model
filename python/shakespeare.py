@@ -66,8 +66,8 @@ tokenizer = Tokenizer(filters='')
 tokenizer.fit_on_texts(lines)
 sequences = tokenizer.texts_to_sequences(lines)                         #transforms each text in texts to a sequence of integers
 
-print("################################")
-print(lines[250])
+
+#[print(word) for word in seed_text]
 
 # [print(len(x)) for x in sequences]
 # tokenizer.sequences_to_texts()
@@ -98,7 +98,7 @@ model.add(Dense(vocab_size, activation='softmax'))
 
 model.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
 
-model.fit(X, y, batch_size = 256, epochs = 200)
+model.fit(X, y, batch_size = 256, epochs = 100)
 
 def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
   text = []
@@ -120,12 +120,29 @@ def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
 
 
 # seed_text = lines[250]
-seed_text = "für Ihre rasche rückmeldung bedanke ich mich"
+
 # print(len(lines))
 
-[print(f"{x}") for x in lines]
-print("seed: " + seed_text)
+#[print(f"{x}") for x in lines]
 
-print(generate_text_seq(model, tokenizer, seq_length, seed_text, 40))
+#print("seed: " + seed_text)
+#print(generate_text_seq(model, tokenizer, seq_length, seed_text, 40))
+
+seed_text = ("für ihre rasche rückmeldung bedanke ich mich",
+             "für ihre schnelle rückmeldung bedanke ich mich",
+             "für ihre sehr schnelle rückmeldung bedanke ich mich",
+             "für Ihre Anfrage bedanke ich mich und",
+             "hiermit bedanke ich mich herzlich für Ihre",
+             "hiermit bedanke ich mich für Ihre Bestellung")
+
+
+seed_text = [word.lower() for word in seed_text]
+
+for seed in seed_text:
+  print("##########################################################################################")
+  print("seed: " + seed)
+  print(generate_text_seq(model, tokenizer, seq_length, seed, 40))
+
+
 
 
