@@ -14,13 +14,15 @@ from pickle import dump
 ########################################### pre-process text ###########################################
 
 delimiter = "%&§§&%"
+n = 15
+epochs = 12
 def pad_punctuation(s): return re.sub(f"([{string.punctuation}])", r' \1 ', s)
 
 with open('sequencesKeys.txt', encoding='utf-8') as f:
   lines = [line.rstrip() for line in f]
 lines = [line.strip() for line in lines]
 lines = [line.split(delimiter) for line in lines]
-lines = [x for x in lines if len(x) == 7]
+lines = [x for x in lines if len(x) == n]
 # [print(f"{len(x)} {x}") for x in lines]
 lines = [" ".join(line) for line in lines]
 
@@ -31,14 +33,13 @@ lines = [pad_punctuation(s) for s in lines]
 
 tokenizer = Tokenizer(filters='')
 tokenizer.fit_on_texts(lines)
-sequences = tokenizer.texts_to_sequences(lines)                         #transforms each text in texts to a sequence of integers
-
+sequences = tokenizer.texts_to_sequences(lines)                         #transforms each line of words to a sequence of integers
 
 #[print(word) for word in seed_text]
 
 # [print(len(x)) for x in sequences]
 # tokenizer.sequences_to_texts()
-sequences = [x for x in sequences if len(x) == 7]
+sequences = [x for x in sequences if len(x) == n]
 
 sequences = np.array(sequences)
 X, y = sequences[:, :-1], sequences[:, -1]                              #split lines in the first 50 words in x and the last word in y
@@ -47,8 +48,7 @@ X, y = sequences[:, :-1], sequences[:, -1]                              #split l
 
 vocab_size = len(tokenizer.word_index) + 1
 
-y = to_categorical(y, vocab_size)                                       #returns a binary matrix representation of the input
-
+# y = to_categorical(y, vocab_size)                                       #returns a binary matrix representation of the input
 seq_length = X.shape[1]                                                 #50
 
 print(seq_length)
@@ -63,9 +63,10 @@ model.add(Dense(vocab_size, activation='softmax'))
 
 #print(model.summary())
 
-model.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
+# model.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
+model.compile(loss=tf.keras.losses.SparseCategoricalCrossentropy(), optimizer='adam', metrics=['accuracy'])
 
-model.fit(X, y, batch_size = 256, epochs = 100)
+model.fit(X, y, batch_size = 256, epochs = epochs)
 
 # save the model to file
 model.save('model.h5')

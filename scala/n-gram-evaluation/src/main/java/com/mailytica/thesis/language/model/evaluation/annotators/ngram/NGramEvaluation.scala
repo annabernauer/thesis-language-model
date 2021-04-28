@@ -68,6 +68,7 @@ class NGramEvaluation (override val uid: String) extends AnnotatorApproach[NGram
     printToFile(new File("target\\sentencePrediction\\sequencesKeys.txt")) { p =>
       sequencesMap.keys.foreach(p.println)
     }
+    print("INFO: Files were created\n")
 
     new NGramEvaluationModel()
       .setHistories(historiesMap)

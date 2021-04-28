@@ -11,6 +11,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpec}
 import shapeless.syntax.std.tuple.unitTupleOps
 
+import java.io.File
 import java.util
 import scala.io.{Codec, Source}
 
@@ -55,18 +56,12 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
       }
     }
     "is trained with big data" when {
-      val n = 7
+      val n = 15
       nlpPipeline.setStages(getStages(n))
 
-      val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messagesSmall.csv"
+      val files = getListOfFiles("src/main/resources/sentencePrediction/textsForTraining/bigData")
 
-      val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
-        .option("header", "true")
-        .option("quote", "\"")
-        .option("escape", "\\")
-        .option("multiLine", value = true)
-        .load(path)
-
+      val df = getDataFrames(files).reduce(_ union _)
       //training
       val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
       //            pipelineModel.write.overwrite().save("target/pipelineModel")
@@ -130,6 +125,28 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
               .mkString + " <SENTENCE_END>"
           })
       }
+    }
+  }
+
+  def getListOfFiles(dir: String):List[File] = {
+    val d = new File(dir)
+    if (d.exists && d.isDirectory) {
+      d.listFiles.filter(_.isFile).toList
+    } else {
+      List[File]()
+    }
+  }
+
+  def getDataFrames(files: List[File]) = {
+
+    files.map{ file =>
+      val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
+        .option("header", "true")
+        .option("quote", "\"")
+        .option("escape", "\\")
+        .option("multiLine", value = true)
+        .load(file.getCanonicalPath)
+      df
     }
   }
 
