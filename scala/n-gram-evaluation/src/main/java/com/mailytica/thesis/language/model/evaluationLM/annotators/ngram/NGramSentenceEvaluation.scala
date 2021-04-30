@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.evaluation.annotators.ngram
+package com.mailytica.thesis.language.model.evaluationLM.annotators.ngram
 
 import com.johnsnowlabs.nlp.AnnotatorApproach
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN

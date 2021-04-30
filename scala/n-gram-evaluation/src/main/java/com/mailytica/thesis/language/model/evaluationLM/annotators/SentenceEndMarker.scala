@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.evaluation.annotators
+package com.mailytica.thesis.language.model.evaluationLM.annotators
 
 import com.johnsnowlabs.nlp.AnnotatorType.DOCUMENT
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}

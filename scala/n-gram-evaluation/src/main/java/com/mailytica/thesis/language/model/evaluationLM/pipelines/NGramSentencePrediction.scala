@@ -1,9 +1,9 @@
-package com.mailytica.thesis.language.model.evaluation.pipelines
+package com.mailytica.thesis.language.model.evaluationLM.pipelines
 
 import com.johnsnowlabs.nlp.DocumentAssembler
 import com.johnsnowlabs.nlp.annotator.Tokenizer
-import com.mailytica.thesis.language.model.evaluation.annotators.ngram.NGramSentenceEvaluation
-import com.mailytica.thesis.language.model.evaluation.annotators.{RedundantTextTrimmer, SentenceEndMarker, SentenceSplitter}
+import com.mailytica.thesis.language.model.evaluationLM.annotators.ngram.NGramSentenceEvaluation
+import com.mailytica.thesis.language.model.evaluationLM.annotators.{RedundantTextTrimmer, SentenceEndMarker, SentenceSplitter}
 import org.apache.spark.ml.PipelineStage
 
 object NGramSentencePrediction {

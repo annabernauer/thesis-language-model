@@ -1,8 +1,8 @@
-package com.mailytica.thesis.language.model.evaluation.annotators.ngram
+package com.mailytica.thesis.language.model.evaluationLM.annotators.ngram
 
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, DOCUMENT, TOKEN}
-import com.mailytica.thesis.language.model.evaluation.annotators.{RedundantTextTrimmer, SentenceSplitter}
+import com.mailytica.thesis.language.model.evaluationLM.annotators.{RedundantTextTrimmer, SentenceSplitter}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 
@@ -37,7 +37,8 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
 
     case class NgramChunkAnnotation(currentChunkIdx: Int, annotations: Seq[Annotation])
 
-    val range = Range.inclusive($(nGramMinimum), $(n))
+//    val range = Range.inclusive($(nGramMinimum), $(n))
+    val range = Range.inclusive($(n), $(n))
 
     val ngramsAnnotation = range.foldLeft(NgramChunkAnnotation(0, Seq[Annotation]()))((currentNgChunk, k) => {
 

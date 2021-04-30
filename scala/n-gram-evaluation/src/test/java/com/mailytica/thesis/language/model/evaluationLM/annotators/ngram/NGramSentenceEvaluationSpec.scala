@@ -1,9 +1,9 @@
-package com.mailytica.thesis.language.model.evaluation.annotators.ngram
+package com.mailytica.thesis.language.model.evaluationLM.annotators.ngram
 
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
-import com.mailytica.thesis.language.model.evaluation.pipelines.NGramSentencePrediction.getStages
+import com.mailytica.thesis.language.model.evaluationLM.pipelines.NGramSentencePrediction.getStages
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.junit.runner.RunWith

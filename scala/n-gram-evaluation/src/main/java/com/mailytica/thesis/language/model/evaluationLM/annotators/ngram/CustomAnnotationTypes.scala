@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.evaluation.annotators.ngram
+package com.mailytica.thesis.language.model.evaluationLM.annotators.ngram
 
 object CustomAnnotationTypes {
 

@@ -1,11 +1,11 @@
-package com.mailytica.thesis.language.model.evaluation.annotators.ngram
+package com.mailytica.thesis.language.model.evaluationLM.annotators.ngram
 
 import breeze.numerics.{log, sqrt}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
-import com.mailytica.thesis.language.model.evaluation.annotators.ngram.CustomAnnotationTypes.LANGUAGE_MODEL_ANNOTATION
+import com.mailytica.thesis.language.model.evaluationLM.annotators.ngram.CustomAnnotationTypes.LANGUAGE_MODEL_ANNOTATION
 import org.apache.spark.ml.param.{IntArrayParam, IntParam, Param, StringArrayParam}
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 import com.mailytica.thesis.language.model.util.Utility.DELIMITER

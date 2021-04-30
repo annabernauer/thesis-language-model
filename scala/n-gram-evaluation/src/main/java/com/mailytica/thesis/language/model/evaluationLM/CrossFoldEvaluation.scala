@@ -1,9 +1,9 @@
-package com.mailytica.thesis.language.model.evaluation
+package com.mailytica.thesis.language.model.evaluationLM
 
 import com.johnsnowlabs.nlp.Annotation
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
-import com.mailytica.thesis.language.model.evaluation.pipelines.NGramSentencePrediction.getStages
-import com.mailytica.thesis.language.model.evaluation.returnTypes.{AvgLogLikelihood, Duration, Likelihood, LikelihoodMedian, MetadataTypes, Perplexity, PerplexityMedian}
+import com.mailytica.thesis.language.model.evaluationLM.pipelines.NGramSentencePrediction.getStages
+import com.mailytica.thesis.language.model.evaluationLM.returnTypes.{AvgLogLikelihood, Duration, Likelihood, LikelihoodMedian, MetadataTypes, Perplexity, PerplexityMedian}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
@@ -25,7 +25,7 @@ object CrossFoldEvaluation {
     val n = 5
     nlpPipeline.setStages(getStages(n))
 
-    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messagesSmall.csv"
+    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
 
     val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
       .option("header", "true")
