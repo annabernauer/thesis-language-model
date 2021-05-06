@@ -9,6 +9,7 @@
     <packaging>pom</packaging>
 
 	<modules>
+        <module>evaluation</module>
         <module>n-gram-language-model</module>
         <module>n-gram-evaluation</module>
         <module>util</module>
