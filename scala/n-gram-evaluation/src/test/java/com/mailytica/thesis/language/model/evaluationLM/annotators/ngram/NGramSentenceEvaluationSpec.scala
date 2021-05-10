@@ -59,9 +59,11 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
       val n = 15
       nlpPipeline.setStages(getStages(n))
 
-      val files = getListOfFiles("src/main/resources/sentencePrediction/textsForTraining/bigData")
+//      val files = getListOfFiles("src/main/resources/sentencePrediction/textsForTraining/bigData")
+      val files = getListOfFiles("src/main/resources/sentencePrediction/textsForTraining/messagesSmall.csv")
 
       val df = getDataFrames(files).reduce(_ union _)
+
       //training
       val pipelineModel: PipelineModel = nlpPipeline.fit(df.toDF("text"))
       //            pipelineModel.write.overwrite().save("target/pipelineModel")
@@ -132,6 +134,8 @@ class NGramSentenceEvaluationSpec extends WordSpec with Matchers {
     val d = new File(dir)
     if (d.exists && d.isDirectory) {
       d.listFiles.filter(_.isFile).toList
+    } else if (d.exists && d.isFile){
+      List[File](d)
     } else {
       List[File]()
     }

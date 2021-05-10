@@ -26,10 +26,10 @@ object CosineSimilarity {
 
     import spark.implicits._
 
-    //    val referenceText = "Sollten Sie weitere Fragen haben können Sie mich gerne kontaktieren."
-    val referenceText = Seq("b c d a g a a g g g", "b b c a f").toDF("text")
-    val predictedTest = "sollten sie weitere fragen haben , oder eine auftragsbestätigung mit der pins mit der pins mit der pins der pins ist ."
-    val seedText = "für ihre rasche rückmeldung bedanke ich mich herzlich und darf ihnen anbei unser neues angebot für ihre pins senden ."
+    //    val reference = "Sollten Sie weitere Fragen haben können Sie mich gerne kontaktieren."
+    val reference = Seq("Ihnen den neuen Korrekturabzug. Anbei sende", "Anbei sende ich Ihnen den").toDF("text")
+    val hypothese = Seq("Anbei sende ich Ihnden den").toDF("text")
+    val context = Seq("Anbei sende ich").toDF("text")
 
     val documentAssembler = new DocumentAssembler()
       .setInputCol("text")
@@ -55,12 +55,14 @@ object CosineSimilarity {
     val nlpPipeline = new Pipeline()
     nlpPipeline.setStages(Array(documentAssembler, sentenceDetector, tokenizer, finisher, countVector))
 
-    val pipelineModel: PipelineModel = nlpPipeline.fit(referenceText)
-    val annotated: DataFrame = pipelineModel.transform(referenceText)
+    val pipelineModel: PipelineModel = nlpPipeline.fit(reference.union(hypothese))
+    val annotatedReference: DataFrame = pipelineModel.transform(reference)
+    val annotatedHypothese: DataFrame = pipelineModel.transform(hypothese)
 
-    annotated.show(false)
+    annotatedHypothese.show()
+//    annotatedReference.join(annotatedHypothese, )
 
-    val withCosineColumn: DataFrame = annotated.withColumn("cosine", cosineSimilarityUdf(col("vectorizedCount"), col("vectorizedCount")))
+    val withCosineColumn: DataFrame = annotatedHypothese.withColumn("cosine", cosineSimilarityUdf(col("vectorizedCount"), col("vectorizedCount")))
 
     withCosineColumn.show(false)
 
@@ -70,7 +72,7 @@ object CosineSimilarity {
     cosineSimilarity(vectorA, vectorB)
   }
 
-  def cosineSimilarity(vectorA: Vector, vectorB: Vector) : (Double, Double) = {
+  def cosineSimilarity(vectorA: Vector, vectorB: Vector) : Double = {
 
     val vectorArrayA = vectorA.toArray
     val vectorArrayB = vectorB.toArray
@@ -90,9 +92,9 @@ object CosineSimilarity {
 
     val div : Double = normASqrt * normBSqrt
     if( div == 0 )
-      (dotProduct, 0)
+      0
     else
-      (dotProduct, dotProduct / div)
+      dotProduct / div
   }
 
 }

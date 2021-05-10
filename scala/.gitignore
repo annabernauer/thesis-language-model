@@ -14,3 +14,4 @@ dependency-reduced-pom.xml
 .project
 .classpath
 bigData/
+messagesSmall.csv
