@@ -63,9 +63,9 @@ class NGramSentenceEvaluationModel(override val uid: String) extends AnnotatorMo
 
     val perplexity: Double = invertedLikelihoods.map(lh => Math.pow(lh, 1 / invertedLikelihoods.size.toDouble)).product
 
-    if (perplexity.isInfinite) {
-      println("WARNING perplexity is infinite")
-    }
+//    if (perplexity.isInfinite) {
+//      println("WARNING perplexity is infinite")
+//    }
 
     val avgLogLikelihood: Double =
       likelihoods

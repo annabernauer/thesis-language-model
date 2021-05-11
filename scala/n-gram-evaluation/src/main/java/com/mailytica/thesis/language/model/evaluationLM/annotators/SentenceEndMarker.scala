@@ -5,7 +5,7 @@ import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
 import org.apache.spark.ml.util.Identifiable
 
 import scala.util.matching.Regex
-
+//is replaced by SentenceSplitter
 class SentenceEndMarker(override val uid: String) extends AnnotatorModel[SentenceEndMarker] {
 
   override val outputAnnotatorType: AnnotatorType = DOCUMENT

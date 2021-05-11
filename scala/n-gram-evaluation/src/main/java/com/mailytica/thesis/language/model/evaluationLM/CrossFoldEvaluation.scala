@@ -5,7 +5,7 @@ import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.mailytica.thesis.language.model.evaluationLM.pipelines.NGramSentencePrediction.getStages
 import com.mailytica.thesis.language.model.evaluationLM.returnTypes.{AvgLogLikelihood, Duration, Likelihood, LikelihoodMedian, MetadataTypes, Perplexity, PerplexityMedian}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession, functions}
 
 
 object CrossFoldEvaluation {
@@ -25,7 +25,7 @@ object CrossFoldEvaluation {
     val n = 5
     nlpPipeline.setStages(getStages(n))
 
-    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messages.csv"
+    val path = "src/main/resources/sentencePrediction/textsForTraining/messagesSmall.csv"
 
     val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
       .option("header", "true")
@@ -33,11 +33,15 @@ object CrossFoldEvaluation {
       .option("escape", "\\")
       .option("multiLine", value = true)
       .load(path)
+//      .orderBy(functions.rand())
 
-    val splitArray: Array[Dataset[Row]] = df.randomSplit(Array(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1))
+    val fraction = 1.0 / 10.toDouble
+    val fractionPerSplit = Array.fill(10)(fraction)
+    val splitArray: Array[Dataset[Row]] = df.randomSplit(fractionPerSplit)
 
     val allCrossFoldValues: Array[MetadataTypes] =
       splitArray
+        .take(1)
         .map { testData =>
 
           val trainingData: DataFrame = splitArray
@@ -57,7 +61,9 @@ object CrossFoldEvaluation {
             .as[Array[Annotation]]
             .collect()
             .flatten
+            .filter(annotation => annotation.result != "empty")
 
+//          annotationsPerDocuments.foreach(a => println(a + " " + a.metadata))
           getCalculations(annotationsPerDocuments)
         }
 
@@ -116,6 +122,7 @@ object CrossFoldEvaluation {
 
 
   def getAverage(key: String, annotationsPerDocuments: Array[Annotation]) = {
+
     getMapByKey(key, annotationsPerDocuments)
       .sum / annotationsPerDocuments.length
   }

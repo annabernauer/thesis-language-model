@@ -16,6 +16,9 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
 
   val SENTENCE_END: String = " <SENTENCE_END>"
 
+  val SENTENCE_START: String = "<SENTENCE_START> "
+
+
   val REGEX_SENTENCE_END: Regex = "(\\.|:|\\R|\\?|\\!|$)".r()
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
@@ -37,12 +40,12 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
             )
           }.filterNot(sentence => sentence.result.trim.isEmpty)
 
-        sentences
-          .map{ sentence =>
+        sentences                                                                               //Sentence End and Start Marker
+          .map { sentence =>
 
-            val result = sentence.result
+            val result = SENTENCE_START + sentence.result
 
-            val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {            // essential for sentence prediction, because otherwise not finished sentences are getting terminated and sentence completion isn't possible
+            val resultWithSentenceEnd = REGEX_SENTENCE_END.findFirstIn(result) match {          // essential for sentence prediction, because otherwise not finished sentences are getting terminated and sentence completion isn't possible
               case None => result
               case Some(_) => result.replaceAll("\\R", "") + SENTENCE_END
             }
@@ -51,10 +54,7 @@ class SentenceSplitter(override val uid: String) extends AnnotatorModel[Sentence
               result = resultWithSentenceEnd
             )
           }
-
-        sentences
       }
-
   }
 }
 
