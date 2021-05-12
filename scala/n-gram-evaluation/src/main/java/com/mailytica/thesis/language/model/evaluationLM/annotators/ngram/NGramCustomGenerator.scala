@@ -40,7 +40,8 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
 //    val range = Range.inclusive($(nGramMinimum), $(n))
     val range = Range.inclusive($(n), $(n))
 
-    val ngramsAnnotation = range.foldLeft(NgramChunkAnnotation(0, Seq[Annotation]()))((currentNgChunk, k) => {
+    val ngramsAnnotation = range.foldLeft(NgramChunkAnnotation(0, Seq[Annotation]()))((currentNgChunk, k) => {  //first param is acc and is initialized with a start value
+                                                                                                                //second param is the list/seq... iterated
 
       val chunksForCurrentWindow = annotations.iterator.sliding(k).withPartial(false).zipWithIndex.map { case (tokens: Seq[Annotation], localChunkIdx: Int) =>
         Annotation(

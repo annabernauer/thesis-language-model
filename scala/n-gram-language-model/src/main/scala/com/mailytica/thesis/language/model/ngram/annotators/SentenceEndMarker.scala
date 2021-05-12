@@ -34,8 +34,6 @@ class SentenceEndMarker(override val uid: String) extends AnnotatorModel[Sentenc
           case Some(_) => result.replaceAll("\\R", "") + SENTENCE_END
         }
 
-        //      println("resultWithSentenceEnd")
-        //      println(resultWithSentenceEnd)
         sentence.copy(
 
           result = resultWithSentenceEnd

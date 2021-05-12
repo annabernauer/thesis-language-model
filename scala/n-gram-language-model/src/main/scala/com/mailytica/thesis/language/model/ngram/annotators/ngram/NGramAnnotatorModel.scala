@@ -60,7 +60,7 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
 //      }
 
       tokensWithLikelihood
-        .lastOption
+        .lastOption                   //max likelihood
 
     }
 
