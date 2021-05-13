@@ -9,9 +9,9 @@ import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, I
 
 class SentenceSeedExtractor(override val uid: String) extends AnnotatorModel[SentenceSeedExtractor] with DefaultParamsWritable {
 
-  override val outputAnnotatorType: AnnotatorType = TOKEN
-
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
+
+  override val outputAnnotatorType: AnnotatorType = TOKEN
 
   def this() = this(Identifiable.randomUID("SENTENCE_SEED_EXTRACTOR"))
 

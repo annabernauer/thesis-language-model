@@ -43,16 +43,16 @@ object ExecutableSentencePrediction {
     while (true) {
       val input = readLine("Please type your text\n")
 
-      val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(input)
+      val annotated: Map[String, Seq[Annotation]] = new LightPipeline(pipelineModel).fullAnnotate(input)    //colName and Seq of Annotations
 
       println("\nSentence prediction: ")
 
-      annotated("sentencePrediction").foreach(x => {
-        REGEX_PUNCTUATION.findFirstMatchIn(x.result) match {
-          case None => print(s" ${x.result}")
-          case Some(_) => print(s"${x.result}")
+      annotated("sentencePrediction").foreach(token => {
+        REGEX_PUNCTUATION.findFirstMatchIn(token.result) match {
+          case None => print(s" ${token.result}")
+          case Some(_) => print(s"${token.result}")     //punctuation without whitespace
         }
-//        print(s"${x.result} ")
+//        print(s"${token.result} ")
       })
 
       print("\n\n")

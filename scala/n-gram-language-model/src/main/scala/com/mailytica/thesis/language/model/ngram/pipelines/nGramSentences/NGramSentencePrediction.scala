@@ -4,6 +4,7 @@ import com.johnsnowlabs.nlp.DocumentAssembler
 import com.johnsnowlabs.nlp.annotator.{SentenceDetector, Tokenizer}
 import com.mailytica.thesis.language.model.ngram.annotators.ngram.NGramSentenceAnnotator
 import com.mailytica.thesis.language.model.ngram.annotators.{RedundantTextTrimmer, SentenceEndMarker, SentenceSplitter}
+import com.mailytica.thesis.language.model.ngram.cosineSimilarity.annotators.TokensMerger
 import org.apache.spark.ml.PipelineStage
 
 
@@ -37,7 +38,11 @@ object NGramSentencePrediction {
       .setOutputCol("sentencePrediction")
       .setN(n)
 
-    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, markedSentenceEnds, tokenizer, nGramSentenceAnnotator)
+    val tokensMerger = new TokensMerger()
+      .setInputCols("sentencePrediction")
+      .setOutputCol("mergedPrediction")
+
+    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, markedSentenceEnds, tokenizer, nGramSentenceAnnotator, tokensMerger)
   }
 
 }

@@ -67,7 +67,8 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
       }
     }
 
-    loop(annotations).filterNot(token => (token.result == SENTENCE_END) || (token.result == SENTENCE_START))
+    loop(annotations)
+      .filterNot(token => (token.result == SENTENCE_END) || (token.result == SENTENCE_START))          //remove SENTENCE_END and SENTENCE_START tags
 
   }
 

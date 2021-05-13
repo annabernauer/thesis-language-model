@@ -2,7 +2,7 @@ package com.mailytica.thesis.language.model.ngram.cosineSimilarity.annotators
 
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param.{Param, ParamMap}
-import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
+import org.apache.spark.sql.types.{ArrayType, DataTypes, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset}
 
 import java.util.UUID
@@ -32,16 +32,16 @@ class ExplodedTransformer(override val uid: String = UUID.randomUUID().toString)
   override def transformSchema(schema: StructType): StructType = {
 
     val actualDataType = schema($(inputCol)).dataType
-//    require(actualDataType.equals(DataTypes.StringType), s"Column ${$(inputCol)} must be StringType but was actually $actualDataType.")
+    require(actualDataType.equals(ArrayType(StringType)), s"Column ${$(inputCol)} must be ArrayType but was actually $actualDataType.")
 
-    schema.add(StructField($(outputCol), DataTypes.StringType, false))
+    schema.add(StructField($(outputCol), DataTypes.StringType, true))
   }
 
   override def transform(dataset: Dataset[_]): DataFrame = {
 
     import org.apache.spark.sql.functions._
 
-    dataset.select(explode(col($(inputCol)).as($(outputCol))))
+    dataset.select(explode(col($(inputCol))).as($(outputCol)))
   }
 
 }
