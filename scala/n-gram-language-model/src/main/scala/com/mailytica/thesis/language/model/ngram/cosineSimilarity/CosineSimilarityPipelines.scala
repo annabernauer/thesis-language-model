@@ -15,55 +15,61 @@ object CosineSimilarityPipelines {
   def getPreprocessStages(n: Int = 3): Array[_ <: PipelineStage] = {
 
     val documentAssembler = new DocumentAssembler()
-      .setInputCol("text")
+      .setInputCol("data")
       .setOutputCol("document")
       .setCleanupMode("disabled")
 
     val redundantTextTrimmer = new RedundantTextTrimmer()
-      .setInputCols("document")
+      .setInputCols(documentAssembler.getOutputCol)
       .setOutputCol("trimmedDocument")
 
     val sentenceSplitter = new SentenceSplitter()
-      .setInputCols("trimmedDocument")
+      .setInputCols(redundantTextTrimmer.getOutputCol)
       .setOutputCol("sentences")
 
-
-
     val finisher = new Finisher()
-      .setInputCols("sentences")
+      .setInputCols(sentenceSplitter.getOutputCol)
       .setOutputCols("finishedSentences")
       .setIncludeMetadata(false)
 
-    val explodedTransformer = new ExplodedTransformer()
-      .setInputCol("finishedSentences")
-      .setOutputCol("explodedSentences")
+    val explodedTransformer = new ExplodedTransformer()         //one column per sentence, references
+      .setInputCol(finisher.getOutputCols.head)
+      .setOutputCol("referenceSentences")
 
     val documentAssemblerDue = new DocumentAssembler()
-      .setInputCol("explodedSentences")
+      .setInputCol(explodedTransformer.getOutputCol)
       .setOutputCol("explodedDocument")
       .setCleanupMode("disabled")
 
     val tokenizer = new Tokenizer()
-      .setInputCols("explodedDocument")
+      .setInputCols(documentAssemblerDue.getOutputCol)
       .setOutputCol("token")
 
     val sentenceSeed = new SentenceSeedExtractor()
-      .setInputCols("token")
+      .setInputCols(tokenizer.getOutputCol)
       .setOutputCol("seeds")
       .setN(n)
 
-    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, finisher, explodedTransformer, documentAssemblerDue, tokenizer, sentenceSeed)
+    val finisherDue = new Finisher()
+      .setInputCols(sentenceSeed.getOutputCol)
+      .setOutputCols("seeds")
+      .setOutputAsArray(false)
+
+    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, finisher, explodedTransformer, documentAssemblerDue, tokenizer, sentenceSeed, finisherDue)
   }
 
+//  def getVectorizerStages(inputCol: String, outputCol: String): Array[_ <: PipelineStage] = {
   def getVectorizerStages: Array[_ <: PipelineStage] = {
 
     val documentAssembler = new DocumentAssembler()
-      .setInputCol("text")
+//      .setInputCol(inputCol)
+//      .setOutputCol("document_" + inputCol)
+      .setInputCol("mergedPrediction")
       .setOutputCol("document")
       .setCleanupMode("disabled")
 
     val sentenceDetector = new SentenceDetector()
-      .setInputCols("document")
+      .setInputCols(documentAssembler.getOutputCol)
       .setOutputCol("sentences")
 
     val tokenizer = new Tokenizer()
@@ -77,6 +83,7 @@ object CosineSimilarityPipelines {
     val countVector = new CountVectorizer()
       .setInputCol("finishedTokens")
       .setOutputCol("vectorizedCount")
+//      .setOutputCol(outputCol)
 
     Array(documentAssembler, sentenceDetector, tokenizer, finisher, countVector)
   }
@@ -85,7 +92,7 @@ object CosineSimilarityPipelines {
 
     //context processing
     val documentAssembler = new DocumentAssembler()
-      .setInputCol("text")
+      .setInputCol("seeds")
       .setOutputCol("document")
       .setCleanupMode("disabled")
 
@@ -120,7 +127,7 @@ object CosineSimilarityPipelines {
   def getReferenceStages(): Array[_ <: PipelineStage] = {
         //reference processing -> removing of new lines
         val documentAssemblerReference = new DocumentAssembler()
-          .setInputCol("reference")
+          .setInputCol("referenceSentences")
           .setOutputCol("referenceDocument")
           .setCleanupMode("disabled")
 

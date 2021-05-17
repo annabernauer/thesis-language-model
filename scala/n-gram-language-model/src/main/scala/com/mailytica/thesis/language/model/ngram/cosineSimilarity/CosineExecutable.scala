@@ -3,10 +3,13 @@ package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
-import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages}
+import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages, getVectorizerStages}
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.ExecutableSentencePrediction.getClass
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
+import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import scala.io.{Codec, Source}
@@ -58,39 +61,18 @@ object CosineExecutable {
           .diff(Array(testData)) //remove testData
           .reduce(_ union _)
 
-        val pipelineModel: PipelineModel = nlpPipeline.fit(trainingData.toDF("text"))
+        val preprocessed =  prepocessData(testData)                                                                      //get seed and reference and explode text into sentences
 
-        val (context: Seq[String], reference: Seq[String]) = prepocessData(testData)
-        val annotated: DataFrame = pipelineModel.transform(context.zip(reference).toDF("text", "reference"))
-
-        val predictions: Array[String] = getCol(annotated, "mergedPrediction")
-        //          val referencesProcessed : Array[String] = getCol(annotated, "referenceWithoutNewLines")
-
-        val referenceProcessed = processReferenceData(reference)
+        val pipelineModel: PipelineModel = nlpPipeline.fit(trainingData.toDF("seeds"))                                 //no preprocessing needed for trainingsData
+        val predictionDf: DataFrame = pipelineModel.transform(preprocessed)
 
 
-        val contextReferencePredictions: Seq[ContextReferencePrediction] = {
-          context
-            .zip(referenceProcessed)
-            .zip(predictions)
-            .map(contextReferencePrediction =>
-              ContextReferencePrediction(contextReferencePrediction._1._1, contextReferencePrediction._1._2, contextReferencePrediction._2))
-        }
-
-        contextReferencePredictions.foreach(println)
+        val referenceProcessedDf: DataFrame = processReferenceData(predictionDf)                                      //remove new lines from reference, can't be removed before
+                                                                                                                        //because they are needed for prediction
+        referenceProcessedDf.show()
+        //        vectorizeData(referenceProcessedDf).show()
 
       }
-  }
-
-  def getCol(df: DataFrame, colName: String): Array[String] = {
-    df
-      .select(colName)
-      .cache()
-      .as[Array[Annotation]]
-      .collect()
-      .flatten
-      //            .filter(annotation => annotation.result != "empty")
-      .map(annotation => annotation.result)
   }
 
   def getResourceText(path: String) = {
@@ -108,52 +90,73 @@ object CosineExecutable {
     }
   }
 
+
   def prepocessData(data: Dataset[Row]) = {
-    val nlpPipelinePreprocess = new Pipeline()
+    val preprocessPipeline = new Pipeline()
 
-    nlpPipelinePreprocess.setStages(getPreprocessStages(n))
-    val pipelineModel: PipelineModel = nlpPipelinePreprocess.fit(data.toDF("text"))
+    preprocessPipeline.setStages(getPreprocessStages(n))
+    val pipelineModel: PipelineModel = preprocessPipeline.fit(data.toDF("data"))
 
-    val processed: DataFrame = pipelineModel.transform(data.toDF("text"))
+    val processed: DataFrame = pipelineModel.transform(data.toDF("data"))
 
-    val processedSeeds: DataFrame = processed.select("seeds")
-    val processedSentences: DataFrame = processed.select("explodedDocument")
-
-    val seedAnnotations: Seq[String] = processedSeeds
-      .as[Array[Annotation]]
-      .collect()
-      .flatten
-      //      .filter(annotation => annotation.result != "empty")
-      .toSeq
-      .map(annotation => annotation.result)
-
-    val sentenceAnnotation: Seq[String] = processedSentences
-      .as[Array[Annotation]]
-      .collect()
-      .flatten
-      //      .filter(annotation => annotation.result != "empty")
-      .toSeq
-      .map(annotation => annotation.result)
-
-    (seedAnnotations, sentenceAnnotation)
+    processed
   }
 
-  def processReferenceData(references: Seq[String]) = {
+
+  def processReferenceData(df: DataFrame) = {
     val nlpPipelineReference = new Pipeline()
 
     nlpPipelineReference.setStages(getReferenceStages())
-    val pipelineModel: PipelineModel = nlpPipelineReference.fit(references.toDF("reference"))
+    val pipelineModel: PipelineModel = nlpPipelineReference.fit(df)
 
-    val processed: DataFrame = pipelineModel.transform(references.toDF("reference"))
+    val processed: DataFrame = pipelineModel.transform(df)
 
-    val processedReference: DataFrame = processed.select("referenceWithoutNewLines")
-
-    processedReference
-      .as[Array[Annotation]]
-      .collect()
-      .flatten
-      //      .filter(annotation => annotation.result != "empty")
-      .toSeq
-      .map(annotation => annotation.result)
+    processed
   }
+
+  def vectorizeData(df: DataFrame) = {
+
+    val vectorizePipeline = new Pipeline()
+    vectorizePipeline.setStages(getVectorizerStages)
+
+    val pipelineModel: PipelineModel = vectorizePipeline.fit(df)
+    val annotatedReference: DataFrame = pipelineModel.transform(df)
+    val annotatedHypothesis: DataFrame = pipelineModel.transform(df)
+
+    val withCosineColumn: DataFrame = annotatedHypothesis.withColumn("cosine", cosineSimilarityUdf(col("vectorizedCount"), col("vectorizedCount")))
+    withCosineColumn
+//    val df3 = annotatedHypothesis.join(annotatedReference, cosineSimilarityUdf(annotatedHypothesis.col("vectorizedCount"), annotatedReference.col("vectorizedCount")))
+//    df3.show(false)
+  }
+
+  val cosineSimilarityUdf : UserDefinedFunction = udf{ (vectorA : Vector, vectorB: Vector) =>
+    cosineSimilarity(vectorA, vectorB)
+  }
+
+  def cosineSimilarity(vectorA: Vector, vectorB: Vector) : Double = {
+
+    val vectorArrayA = vectorA.toArray
+    val vectorArrayB = vectorB.toArray
+
+    val normASqrt : Double = Math.sqrt(vectorArrayA.map{ value =>
+      Math.pow(value , 2)
+    }.sum)
+
+    val normBSqrt : Double = Math.sqrt(vectorArrayB.map{ value =>
+      Math.pow(value , 2)
+    }.sum)
+
+    val dotProduct : Double =  vectorArrayA
+      .zip(vectorArrayB)
+      .map{case (x,y) => x*y }
+      .sum
+
+    val div : Double = normASqrt * normBSqrt
+    if( div == 0 )
+      0
+    else
+      dotProduct / div
+  }
+
+
 }

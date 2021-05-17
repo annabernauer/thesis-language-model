@@ -11,7 +11,7 @@ class SentenceSeedExtractor(override val uid: String) extends AnnotatorModel[Sen
 
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
 
-  override val outputAnnotatorType: AnnotatorType = TOKEN
+  override val outputAnnotatorType: AnnotatorType = CHUNK
 
   def this() = this(Identifiable.randomUID("SENTENCE_SEED_EXTRACTOR"))
 
