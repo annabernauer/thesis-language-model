@@ -7,7 +7,7 @@ import com.mailytica.thesis.language.model.ngram.annotators.{RedundantTextTrimme
 import com.mailytica.thesis.language.model.ngram.annotators.ngram.NGramSentenceAnnotator
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.annotators.{ExplodedTransformer, SentenceNewLineRemover, SentenceSeedExtractor, TokensMerger}
 import org.apache.spark.ml.PipelineStage
-import org.apache.spark.ml.feature.CountVectorizer
+import org.apache.spark.ml.feature.{CountVectorizer, HashingTF}
 import org.apache.spark.sql.catalyst.expressions.Explode
 
 object CosineSimilarityPipelines {
@@ -58,34 +58,22 @@ object CosineSimilarityPipelines {
     Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, finisher, explodedTransformer, documentAssemblerDue, tokenizer, sentenceSeed, finisherDue)
   }
 
-//  def getVectorizerStages(inputCol: String, outputCol: String): Array[_ <: PipelineStage] = {
-  def getVectorizerStages: Array[_ <: PipelineStage] = {
-
-    val documentAssembler = new DocumentAssembler()
-//      .setInputCol(inputCol)
-//      .setOutputCol("document_" + inputCol)
-      .setInputCol("mergedPrediction")
-      .setOutputCol("document")
-      .setCleanupMode("disabled")
-
-    val sentenceDetector = new SentenceDetector()
-      .setInputCols(documentAssembler.getOutputCol)
-      .setOutputCol("sentences")
+  def getVectorizerStages(inputCol: String, identifier: String): Array[_ <: PipelineStage] = {
 
     val tokenizer = new Tokenizer()
-      .setInputCols("sentences")
-      .setOutputCol("tokens")
+      .setInputCols(inputCol)
+      .setOutputCol("tokens_" + identifier)
 
     val finisher = new Finisher()
-      .setInputCols("tokens")
-      .setOutputCols("finishedTokens")
+      .setInputCols(tokenizer.getOutputCol)
+      .setOutputCols("finishedTokens_" + identifier)
+      .setCleanAnnotations(false)
 
-    val countVector = new CountVectorizer()
-      .setInputCol("finishedTokens")
-      .setOutputCol("vectorizedCount")
-//      .setOutputCol(outputCol)
+    val countVector = new HashingTF()
+      .setInputCol(finisher.getOutputCols.head)
+      .setOutputCol("vectorizedCount_" + identifier)
 
-    Array(documentAssembler, sentenceDetector, tokenizer, finisher, countVector)
+    Array(tokenizer, finisher, countVector)
   }
 
   def getPredictionStages(n: Int = 3): Array[_ <: PipelineStage] = {

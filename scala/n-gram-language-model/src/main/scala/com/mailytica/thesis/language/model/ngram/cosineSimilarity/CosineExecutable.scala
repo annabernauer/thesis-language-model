@@ -69,25 +69,11 @@ object CosineExecutable {
 
         val referenceProcessedDf: DataFrame = processReferenceData(predictionDf)                                      //remove new lines from reference, can't be removed before
                                                                                                                         //because they are needed for prediction
-        referenceProcessedDf.show()
-        //        vectorizeData(referenceProcessedDf).show()
+        val vectorizedData = vectorizeData(referenceProcessedDf)
+//        vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "cosine").show(100,false)
+        vectorizedData.show(100)
 
       }
-  }
-
-  def getResourceText(path: String) = {
-    Seq.range(0, 9).map {
-      x => {
-        resource
-          .managed(getClass.getResourceAsStream(s"$path/00$x.txt"))
-          .acquireAndGet(inputStream => {
-
-            Source
-              .fromInputStream(inputStream)(Codec.UTF8)
-              .mkString + " <SENTENCE_END>"
-          })
-      }
-    }
   }
 
 
@@ -117,16 +103,15 @@ object CosineExecutable {
   def vectorizeData(df: DataFrame) = {
 
     val vectorizePipeline = new Pipeline()
-    vectorizePipeline.setStages(getVectorizerStages)
+    vectorizePipeline.setStages(
+      getVectorizerStages("mergedPrediction", "prediction") ++
+        getVectorizerStages("referenceWithoutNewLines", "reference"))
 
     val pipelineModel: PipelineModel = vectorizePipeline.fit(df)
-    val annotatedReference: DataFrame = pipelineModel.transform(df)
     val annotatedHypothesis: DataFrame = pipelineModel.transform(df)
 
-    val withCosineColumn: DataFrame = annotatedHypothesis.withColumn("cosine", cosineSimilarityUdf(col("vectorizedCount"), col("vectorizedCount")))
+    val withCosineColumn: DataFrame = annotatedHypothesis.withColumn("cosine", cosineSimilarityUdf(col("vectorizedCount_prediction"), col("vectorizedCount_reference")))
     withCosineColumn
-//    val df3 = annotatedHypothesis.join(annotatedReference, cosineSimilarityUdf(annotatedHypothesis.col("vectorizedCount"), annotatedReference.col("vectorizedCount")))
-//    df3.show(false)
   }
 
   val cosineSimilarityUdf : UserDefinedFunction = udf{ (vectorA : Vector, vectorB: Vector) =>
