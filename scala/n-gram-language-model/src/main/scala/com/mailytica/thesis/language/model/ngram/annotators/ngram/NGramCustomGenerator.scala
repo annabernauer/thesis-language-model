@@ -8,15 +8,19 @@ import org.apache.spark.ml.util.Identifiable
 
 class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGramCustomGenerator] {
 
-  override val outputAnnotatorType: AnnotatorType = TOKEN
+  override val outputAnnotatorType: AnnotatorType = CHUNK
 
-  override val inputAnnotatorTypes: Array[String] = Array(CHUNK)
+  override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
 
   def this() = this(Identifiable.randomUID("N_GRAM_CUSTOM_GENERATOR"))
 
   val n: Param[Int] = new Param(this, "n", "")
 
   val delimiter: Param[String] = new Param[String](this, "delimiter", "Glue character used to join the tokens")
+
+  val nGramMinimum: Param[Int] = new Param(this, "nGramMinimum", "")
+
+  def setNGramMinimum(value: Int): this.type = set(this.nGramMinimum, value)
 
   def setN(value: Int): this.type = set(this.n, value)
 
@@ -25,13 +29,14 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
   }
 
   setDefault(this.n -> 3,
-    this.delimiter -> DELIMITER)
+    this.delimiter -> DELIMITER,
+    this.nGramMinimum -> 1)
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
     case class NgramChunkAnnotation(currentChunkIdx: Int, annotations: Seq[Annotation])
 
-    val range = Range.inclusive(1, $(n))
+    val range = Range.inclusive($(nGramMinimum), $(n))
 
     val ngramsAnnotation = range.foldLeft(NgramChunkAnnotation(0, Seq[Annotation]()))((currentNgChunk, k) => {
 

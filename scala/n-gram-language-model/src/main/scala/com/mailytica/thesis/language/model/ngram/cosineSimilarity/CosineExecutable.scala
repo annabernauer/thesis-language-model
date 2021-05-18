@@ -30,7 +30,6 @@ object CosineExecutable {
 
   import spark.implicits._
 
-
   def main(args: Array[String]): Unit = {
 
     import spark.implicits._
@@ -53,9 +52,9 @@ object CosineExecutable {
     val splitArray: Array[Dataset[Row]] = df.randomSplit(fractionPerSplit)
 
     //    val allCrossFoldValues: Array[MetadataTypes] =
-    splitArray
+    val cosineCrossfolgAverages: Array[Double] = splitArray
       .take(1)
-      .foreach { testData =>
+      .map { testData =>
 
         val trainingData: DataFrame = splitArray
           .diff(Array(testData)) //remove testData
@@ -70,10 +69,21 @@ object CosineExecutable {
         val referenceProcessedDf: DataFrame = processReferenceData(predictionDf)                                      //remove new lines from reference, can't be removed before
                                                                                                                         //because they are needed for prediction
         val vectorizedData = vectorizeData(referenceProcessedDf)
-//        vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "cosine").show(100,false)
-        vectorizedData.show(100)
+        vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "cosine").show(100,false)
+//        vectorizedData.show(100)
 
+        val cosineValues = vectorizedData
+          .select("cosine")
+          .cache()
+          .as[Double]
+          .collect()
+
+        val crossfoldAverage = (cosineValues.sum) / cosineValues.length
+        crossfoldAverage
       }
+
+    val totalCosineAvg = cosineCrossfolgAverages.sum / cosineCrossfolgAverages.length
+    print(s"n = $n \ntotalCosineAvg = $totalCosineAvg")
   }
 
 

@@ -4,7 +4,7 @@ import com.johnsnowlabs.nlp.{DocumentAssembler, Finisher}
 import com.johnsnowlabs.nlp.annotator.Tokenizer
 import com.johnsnowlabs.nlp.annotators.sbd.pragmatic.SentenceDetector
 import com.mailytica.thesis.language.model.ngram.annotators.{RedundantTextTrimmer, SentenceEndMarker, SentenceSplitter}
-import com.mailytica.thesis.language.model.ngram.annotators.ngram.NGramSentenceAnnotator
+import com.mailytica.thesis.language.model.ngram.annotators.ngram.{NGramCustomGenerator, NGramSentenceAnnotator}
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.annotators.{ExplodedTransformer, SentenceNewLineRemover, SentenceSeedExtractor, TokensMerger}
 import org.apache.spark.ml.PipelineStage
 import org.apache.spark.ml.feature.{CountVectorizer, HashingTF}
@@ -64,16 +64,22 @@ object CosineSimilarityPipelines {
       .setInputCols(inputCol)
       .setOutputCol("tokens_" + identifier)
 
-    val finisher = new Finisher()
+    val nGramCustomGenerator = new NGramCustomGenerator()
       .setInputCols(tokenizer.getOutputCol)
-      .setOutputCols("finishedTokens_" + identifier)
+      .setOutputCol("ngrams_" + identifier)
+      .setN(3)
+      .setNGramMinimum(3)
+
+    val finisher = new Finisher()
+      .setInputCols(nGramCustomGenerator.getOutputCol)
+      .setOutputCols("finishedNgrams_" + identifier)
       .setCleanAnnotations(false)
 
     val countVector = new HashingTF()
       .setInputCol(finisher.getOutputCols.head)
       .setOutputCol("vectorizedCount_" + identifier)
 
-    Array(tokenizer, finisher, countVector)
+    Array(tokenizer, nGramCustomGenerator, finisher, countVector)
   }
 
   def getPredictionStages(n: Int = 3): Array[_ <: PipelineStage] = {
