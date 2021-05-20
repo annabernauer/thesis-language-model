@@ -13,14 +13,18 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
-import java.io.File
+import java.io.{File, FileOutputStream, PrintStream}
 import scala.io.{Codec, Source}
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
 object CosineExecutable {
+
   val REGEX_PUNCTUATION: Regex = "(\\.|\\!|\\?|\\,|\\:)$".r
-  val n = 5
+  val n = 7
+
+  val dirCrossfoldName = s"${srcName}_n_${n}"
+  val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
 
   val spark = SparkSession
     .builder
@@ -30,9 +34,9 @@ object CosineExecutable {
     .master(s"local[3]")
     .getOrCreate()
 
-  import spark.implicits._
-
   def main(args: Array[String]): Unit = {
+
+    redirectConsoleLog()
 
     import spark.implicits._
 
@@ -75,8 +79,8 @@ object CosineExecutable {
         val referenceProcessedDf: DataFrame = processReferenceData(predictionDf)                                      //remove new lines from reference, can't be removed before
                                                                                                                         //because they are needed for prediction
         val vectorizedData = vectorizeData(referenceProcessedDf)
-        vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "cosine").show(100,false)
-//        vectorizedData.show(100)
+        vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "ngrams_reference", "ngrams_prediction", "cosine").show(20,false)
+        vectorizedData.show(200)
 
         val cosineValues = vectorizedData
           .select("cosine")
@@ -161,14 +165,13 @@ object CosineExecutable {
 
   def writeTestAndTrainingsDataToFile(preprocessed: DataFrame, trainingData: DataFrame, fold: Int) = {
 
-    val dirCrossfoldName = s"${srcName}_n_${n}"
-    val directory = new File(s"target/crossFoldValues/$dirCrossfoldName/${dirCrossfoldName}_fold_${fold}")
-    if (!directory.exists) {
-      directory.mkdirs
+    val directoryFold = new File(s"${specificDirectory}/${dirCrossfoldName}_fold_${fold}")
+    if (!directoryFold.exists) {
+      directoryFold.mkdirs
     }
 
-    val testDataFile = new File(directory.getPath + s"/testData")
-    val trainingDataFile = new File(directory.getPath + s"/trainingData")
+    val testDataFile = new File(directoryFold.getPath + s"/testData")
+    val trainingDataFile = new File(directoryFold.getPath + s"/trainingData")
 
     preprocessed
       .select("referenceSentences", "seeds")
@@ -183,5 +186,18 @@ object CosineExecutable {
       .format("com.databricks.spark.csv")
       .option("header", "true")
       .save(trainingDataFile.getPath)
+  }
+
+  def redirectConsoleLog() = {
+    val console: PrintStream = System.out
+
+    val logFile = new File(s"${specificDirectory}/log.txt")
+    if (!specificDirectory.exists) {
+      specificDirectory.mkdirs
+    }
+
+    val fos = new FileOutputStream(logFile)
+    val ps = new PrintStream(fos)
+    System.setOut(ps)
   }
 }

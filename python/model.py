@@ -1,4 +1,6 @@
 # %tensorflow_version 2.x
+from pathlib import Path
+
 import tensorflow as tf
 import string
 import requests
@@ -29,30 +31,37 @@ class Tee(object):
 ########################################### pre-process text ###########################################
 
 delimiter = "%&§§&%"
-n = 5
-epochs = 30
+n = 6
+epochs = 40 #30 old value
 embeddings = 100
-src_name = "messagesSmall"
+foldCount = 10
+src_name = "messages"
 
-def pad_punctuation(s): return re.sub(f"([{string.punctuation}])", r' \1 ', s)
+# punctuation = r"""!"#$%&'()*+,-./:;=?@[\]^`{|}~"""
+punctuation = r"""!?.,:;"""
+
+def pad_punctuation(s): return re.sub(f"([{punctuation}])", r' \1 ', s)
 
 dirName = f"{src_name}_n_{n}"
 
 targetDir = f"target/{dirName}_emb_{embeddings}_epo_{epochs}"
 logFile = f"{targetDir}/log.txt"
 
+Path(targetDir).mkdir(parents=True, exist_ok=True)
+
 f = open(logFile, 'w')
 original = sys.stdout
 sys.stdout = Tee(sys.stdout, f)
 
-for fold in range(10):
+for fold in range(foldCount):
+  print(f"fold {fold}\n")
   foldDir = f"{dirName}_fold_{fold}"
   with open(f'resources/{dirName}/{foldDir}/historiesAndSequences/sequencesKeys.txt', encoding='utf-8') as f:
     lines = [line.rstrip() for line in f]
   lines = [line.strip() for line in lines]
   lines = [line.split(delimiter) for line in lines]
   lines = [x for x in lines if len(x) == n]
-  # [print(f"{len(x)} {x}") for x in lines]
+
   lines = [" ".join(line) for line in lines]
 
   ########################################### create layers ###########################################
@@ -80,7 +89,6 @@ for fold in range(10):
   # y = to_categorical(y, vocab_size)                                       #returns a binary matrix representation of the input
   seq_length = X.shape[1]                                                 #50
 
-  print(seq_length)
   # print(vocab_size)
 
   model = Sequential()
@@ -97,7 +105,7 @@ for fold in range(10):
 
   model.fit(X, y, batch_size = 256, epochs = epochs)
 
-  targetFoldDir = f"target/{dirName}_emb_{embeddings}_epo_{epochs}/{foldDir}"
+  targetFoldDir = f"{targetDir}/{foldDir}"
   # save the model to file
   model.save(f'{targetFoldDir}/model.h5')
   # save the tokenizer

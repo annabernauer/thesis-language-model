@@ -4,7 +4,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from keras.models import load_model
 from pickle import load
 from pathlib import Path
-
+from pyspark.sql import *
 
 def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
   text = []
@@ -24,41 +24,61 @@ def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
     text.append(predicted_word)
   return ' '.join(text)
 
+n = 5
+epochs = 40  #30 old value
+embeddings = 100
+src_name = "messagesSmall"
+foldCount = 10
 
-n = 15
+srcName = f"{src_name}_n_{n}"
 
-# load the model
-model = load_model('model.h5')
+for fold in range(foldCount):
+  foldDir = f"{srcName}_fold_{fold}"
+  targetFoldDir = f"target/{srcName}_emb_{embeddings}_epo_{epochs}/{foldDir}"
 
-# load the tokenizer
-tokenizer = load(open('tokenizer.pkl', 'rb'))
+  # load the model
+  model = load_model(f'{targetFoldDir}/model.h5')
 
-seed_text = ("Für Ihre rasche Rückmeldung bedanke ich mich herzlich und darf Ihnen anbei unser neues Angebot für Ihre Pins senden . ",
-            "Für Ihre schnelle Rückmeldung bedanke ich mich herzlich und darf Ihnen anbei unser neues Angebot für Ihre Pins senden .",
-             "Sehr gerne sende ich Ihnen vorab und kostenlos einen Gestaltungsvorschlag für Ihre Pins . Bei Interesse bitte ich hier",
-            "gerne sende ich Ihnen vorab und kostenlos einen Gestaltungsvorschlag für Ihre Pins . Bei Interesse bitte ich hier um"
-            )
+  # load the tokenizer
+  tokenizer = load(open(f'{targetFoldDir}/tokenizer.pkl', 'rb'))
 
-# seed_text = [seed.split() for seed in seed_text]
-# seed_text = [seed[:n] for seed in seed_text]
-# seed_text = [" ".join(seed) for seed in seed_text]
-seed_text = [seed.lower() for seed in seed_text]
+  spark = SparkSession \
+    .builder \
+    .appName("Python Spark SQL basic example") \
+    .config("spark.some.config.option", "some-value") \
+    .getOrCreate()
 
-x_seq_length = len(seed_text[0].split(" ")) - 1
+  df = spark.read.csv(f'resources/{srcName}/{foldDir}/testData/part-00000-fac4cd2f-9089-4789-90bf-147327fcf314-c000.csv', header="true", inferSchema="true")
 
-generated_texts = []
+  seed_text = ("Mögliche Änderungswünsche nehmen wir sehr",
+  "Sollten Sie weitere Fragen haben",
+  "Alternativ würde ich mich jederzeit",
+  "Sehr geehrter Herr Blümlein")
 
-for seed in seed_text:
-  generated_text = generate_text_seq(model, tokenizer, x_seq_length, seed, 40)
-  generated_texts.append((seed, generated_text))
+  seeds = [str(row.seeds) for row in df.select("seeds").collect()]
+  # [print(f"{x}") for x in seeds]
 
-print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-[print(text) for text in generated_texts]
+  # seed_text = [seed.split() for seed in seed_text]
+  # seed_text = [seed[:n] for seed in seed_text]
+  # seed_text = [" ".join(seed) for seed in seed_text]
 
-Path("target/").mkdir(parents=True, exist_ok=True)
+  ##seed_text = [seed.lower() for seed in seed_text]
 
-f = open("target/generated_texts.txt", "w")
-for text in generated_texts:
-    f.write(f"<SEED> {text[0]} <GENERATED> {text[1]}\n")
-f.close()
+  x_seq_length = len(seeds[0].split(" ")) - 1
+
+  generated_texts = []
+
+  for seed in seeds:
+    generated_text = generate_text_seq(model, tokenizer, x_seq_length, seed, 40)
+    generated_texts.append((seed, generated_text))
+
+  print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  [print(text) for text in generated_texts]
+
+  Path("target/").mkdir(parents=True, exist_ok=True)
+
+  f = open(f"{targetFoldDir}/generated_texts.txt", "w")
+  for text in generated_texts:
+      f.write(f"<SEED> {text[0]} <SEED_END> <GENERATED> {text[1]} <GENERATED_END>\n")
+  f.close()
 
