@@ -68,7 +68,7 @@ object CosineSimilarityPipelines {
       .setInputCols(tokenizer.getOutputCol)
       .setOutputCol("ngrams_" + identifier)
       .setN(3)
-      .setNGramMinimum(3)
+      .setNGramMinimum(1) //TODO from 1 or 3?
 
     val finisher = new Finisher()
       .setInputCols(nGramCustomGenerator.getOutputCol)

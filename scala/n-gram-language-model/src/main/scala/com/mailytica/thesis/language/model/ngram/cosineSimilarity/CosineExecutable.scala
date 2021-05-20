@@ -6,12 +6,14 @@ import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages, getVectorizerStages}
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.ExecutableSentencePrediction.getClass
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
+import com.mailytica.thesis.language.model.util.Utility.srcName
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
+import java.io.File
 import scala.io.{Codec, Source}
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
@@ -38,7 +40,7 @@ object CosineExecutable {
 
     nlpPipeline.setStages(getPredictionStages(n))
 
-    val path = "src/main/resources/sentencePrediction/textsForTraining/bigData/messagesSmall.csv"
+    val path = s"src/main/resources/sentencePrediction/textsForTraining/bigData/$srcName.csv"
 
     val df: DataFrame = sqlContext.read.format("com.databricks.spark.csv")
       .option("header", "true")
@@ -52,15 +54,19 @@ object CosineExecutable {
     val splitArray: Array[Dataset[Row]] = df.randomSplit(fractionPerSplit)
 
     //    val allCrossFoldValues: Array[MetadataTypes] =
-    val cosineCrossfolgAverages: Array[Double] = splitArray
-      .take(1)
-      .map { testData =>
+    val cosineCrossfoldAverages: Array[Double] = splitArray
+//      .take(2)
+      .zipWithIndex
+      .map { case (testData, fold) =>
+        println("#################### index " + fold)
 
         val trainingData: DataFrame = splitArray
           .diff(Array(testData)) //remove testData
           .reduce(_ union _)
 
         val preprocessed =  prepocessData(testData)                                                                      //get seed and reference and explode text into sentences
+
+        writeTestAndTrainingsDataToFile(preprocessed, trainingData, fold)
 
         val pipelineModel: PipelineModel = nlpPipeline.fit(trainingData.toDF("seeds"))                                 //no preprocessing needed for trainingsData
         val predictionDf: DataFrame = pipelineModel.transform(preprocessed)
@@ -82,7 +88,7 @@ object CosineExecutable {
         crossfoldAverage
       }
 
-    val totalCosineAvg = cosineCrossfolgAverages.sum / cosineCrossfolgAverages.length
+    val totalCosineAvg = cosineCrossfoldAverages.sum / cosineCrossfoldAverages.length
     print(s"n = $n \ntotalCosineAvg = $totalCosineAvg")
   }
 
@@ -153,5 +159,29 @@ object CosineExecutable {
       dotProduct / div
   }
 
+  def writeTestAndTrainingsDataToFile(preprocessed: DataFrame, trainingData: DataFrame, fold: Int) = {
 
+    val dirCrossfoldName = s"${srcName}_n_${n}"
+    val directory = new File(s"target/crossFoldValues/$dirCrossfoldName/${dirCrossfoldName}_fold_${fold}")
+    if (!directory.exists) {
+      directory.mkdirs
+    }
+
+    val testDataFile = new File(directory.getPath + s"/testData")
+    val trainingDataFile = new File(directory.getPath + s"/trainingData")
+
+    preprocessed
+      .select("referenceSentences", "seeds")
+      .write
+      .format("com.databricks.spark.csv")
+      .option("header", "true")
+      .save(testDataFile.getPath)
+
+    trainingData
+      .toDF("seeds")
+      .write
+      .format("com.databricks.spark.csv")
+      .option("header", "true")
+      .save(trainingDataFile.getPath)
+  }
 }

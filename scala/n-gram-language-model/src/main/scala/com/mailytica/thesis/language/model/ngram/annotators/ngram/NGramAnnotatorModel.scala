@@ -64,10 +64,10 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
 
     }
 
-    val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n) - 1)
+    val nGrams: Seq[Annotation] = getTransformedNGramString(annotations, $(n) - 1)                                        //get nGrams of sentence that needs to be predicted
 
     val tokenWithMaxLikelihood: Option[(String, Double)] = nGrams
-      .lastOption
+      .lastOption                                                                                                         //get last ngram of current sentence
       .flatMap(ngram => calculateTokenWithLMaxLikelihood(ngram))
 
     val (lastTokenEnd: Int, lastTokenSentence: String) =
@@ -96,6 +96,7 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
       .setInputCols("tokens")
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
+//      .setNGramMinimum(n)                                                                                             //when that value is set, sentences smaller than n have empty seeds
 
     nGramModel.annotate(tokens)
   }
