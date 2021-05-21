@@ -27,8 +27,12 @@ object CosineSimilarityPipelines {
       .setInputCols(redundantTextTrimmer.getOutputCol)
       .setOutputCol("sentences")
 
+    val markedSentenceEnds = new SentenceEndMarker()
+      .setInputCols("sentences")
+      .setOutputCol("sentencesWithFlaggedEnds")
+
     val finisher = new Finisher()
-      .setInputCols(sentenceSplitter.getOutputCol)
+      .setInputCols(markedSentenceEnds.getOutputCol)
       .setOutputCols("finishedSentences")
       .setIncludeMetadata(false)
 
@@ -55,7 +59,7 @@ object CosineSimilarityPipelines {
       .setOutputCols("seeds")
       .setOutputAsArray(false)
 
-    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, finisher, explodedTransformer, documentAssemblerDue, tokenizer, sentenceSeed, finisherDue)
+    Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, markedSentenceEnds, finisher, explodedTransformer, documentAssemblerDue, tokenizer, sentenceSeed, finisherDue)
   }
 
   def getVectorizerStages(inputCol: String, identifier: String): Array[_ <: PipelineStage] = {

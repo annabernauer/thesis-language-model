@@ -10,7 +10,7 @@ import com.mailytica.thesis.language.model.util.Utility.srcName
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.sql.functions.{col, lit, size, udf}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import java.io.{File, FileOutputStream, PrintStream}
@@ -21,7 +21,7 @@ import scala.util.matching.Regex
 object CosineExecutable {
 
   val REGEX_PUNCTUATION: Regex = "(\\.|\\!|\\?|\\,|\\:)$".r
-  val n = 7
+  val n = 6
 
   val dirCrossfoldName = s"${srcName}_n_${n}"
   val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
@@ -31,7 +31,7 @@ object CosineExecutable {
     .config("spark.driver.maxResultSize", "5g")
     .config("spark.driver.memory", "12g")
     .config("spark.sql.codegen.wholeStage", "false") // deactivated as the compiled grows to big (exception)
-    .master(s"local[3]")
+    .master(s"local[3]") //threads = 6
     .getOrCreate()
 
   def main(args: Array[String]): Unit = {
@@ -67,8 +67,11 @@ object CosineExecutable {
         val trainingData: DataFrame = splitArray
           .diff(Array(testData)) //remove testData
           .reduce(_ union _)
+          .cache()
 
-        val preprocessed =  prepocessData(testData)                                                                      //get seed and reference and explode text into sentences
+        val preprocessed =  prepocessData(testData) //get seed and reference and explode text into sentences
+          .cache()
+          .filter(!(col("seeds") <=> lit("")))
 
         writeTestAndTrainingsDataToFile(preprocessed, trainingData, fold)
 
@@ -78,17 +81,16 @@ object CosineExecutable {
 
         val referenceProcessedDf: DataFrame = processReferenceData(predictionDf)                                      //remove new lines from reference, can't be removed before
                                                                                                                         //because they are needed for prediction
-        val vectorizedData = vectorizeData(referenceProcessedDf)
+        val vectorizedData = vectorizeData(referenceProcessedDf).cache()
         vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "ngrams_reference", "ngrams_prediction", "cosine").show(20,false)
-        vectorizedData.show(200)
 
         val cosineValues = vectorizedData
           .select("cosine")
-          .cache()
           .as[Double]
           .collect()
 
         val crossfoldAverage = (cosineValues.sum) / cosineValues.length
+        println(s"crossfoldAverage = $crossfoldAverage")
         crossfoldAverage
       }
 
@@ -180,12 +182,13 @@ object CosineExecutable {
       .option("header", "true")
       .save(testDataFile.getPath)
 
-    trainingData
-      .toDF("seeds")
-      .write
-      .format("com.databricks.spark.csv")
-      .option("header", "true")
-      .save(trainingDataFile.getPath)
+    println("INFO: Preprocessed data is saved")
+//    trainingData
+//      .toDF("seeds")
+//      .write
+//      .format("com.databricks.spark.csv")
+//      .option("header", "true")
+//      .save(trainingDataFile.getPath)
   }
 
   def redirectConsoleLog() = {
@@ -198,6 +201,6 @@ object CosineExecutable {
 
     val fos = new FileOutputStream(logFile)
     val ps = new PrintStream(fos)
-    System.setOut(ps)
+    System.setOut(console)
   }
 }

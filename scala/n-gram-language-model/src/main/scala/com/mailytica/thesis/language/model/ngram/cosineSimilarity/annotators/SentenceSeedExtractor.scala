@@ -4,14 +4,19 @@ import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel, AnnotatorType}
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, DOCUMENT, TOKEN}
 import com.mailytica.thesis.language.model.ngram.annotators.RedundantTextTrimmer
 import com.mailytica.thesis.language.model.util.Utility.DELIMITER
+import org.apache.commons.cli.Option
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
+
+import scala.Option
 
 class SentenceSeedExtractor(override val uid: String) extends AnnotatorModel[SentenceSeedExtractor] with DefaultParamsWritable {
 
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
 
   override val outputAnnotatorType: AnnotatorType = CHUNK
+
+  val SENTENCE_END: String = "<SENTENCE_END>"
 
   def this() = this(Identifiable.randomUID("SENTENCE_SEED_EXTRACTOR"))
 
@@ -30,21 +35,26 @@ class SentenceSeedExtractor(override val uid: String) extends AnnotatorModel[Sen
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
-    val bound = annotations.length match {
-      case k if (k < $(n)) => k
-      case _ => $(n)
-    }
-    //    val range: Seq[Annotation] = Range.inclusive(1, $(n)).map(i => annotations(i)).foldLeft(Seq.empty[Annotation]){(annotations : Seq[Annotation], i) => annotations :+ i}
-    //    val range: Seq[Annotation] = Range.inclusive(1, $(n)).foldLeft(Seq.empty[Annotation]){(annotationsChunk : Seq[Annotation], i) => annotationsChunk :+ annotations(i)}
-    val sentenceSeed: Seq[String] = Range.inclusive(0, bound-1).foldLeft(Seq.empty[String]) { (annotationsChunk: Seq[String], i) => annotationsChunk :+ annotations(i).result }
+    val seedLength = $(n) - 1
+    annotations.length match {
+      case length if (length < seedLength) => //seed would be smaller than n, needs to be eliminated
+        Seq.empty
+      case _ =>
+        val sentenceSeed: Seq[String] = Range.inclusive(0, seedLength - 1).foldLeft(Seq.empty[String]) { (annotationsChunk: Seq[String], i) => annotationsChunk :+ annotations(i).result }
+        sentenceSeed.lastOption.getOrElse("") match {
+          case SENTENCE_END => //sentence is already finished with End Tag
+            Seq.empty
+          case _ =>
+            Seq(Annotation(
+              annotatorType = AnnotatorType.DOCUMENT,
+              result = sentenceSeed.mkString(" "),
+              begin = 0,
+              end = 0,
+              metadata = Map.empty
+            ))
+        }
 
-    Seq(Annotation(
-      annotatorType = AnnotatorType.DOCUMENT,
-      result = sentenceSeed.mkString(" "),
-      begin = 0,
-      end = 0,
-      metadata = Map.empty
-    ))
+    }
   }
 }
 

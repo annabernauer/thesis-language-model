@@ -56,7 +56,7 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
             case SENTENCE_END => joinedAnnotations
             case _ => {
               count match {
-                case 50 => joinedAnnotations
+                case 40 => joinedAnnotations
                 case _ => {
                   loop(joinedAnnotations ++ $(nGramAnnotatorModel).annotate(joinedAnnotations), count + 1)
                 }

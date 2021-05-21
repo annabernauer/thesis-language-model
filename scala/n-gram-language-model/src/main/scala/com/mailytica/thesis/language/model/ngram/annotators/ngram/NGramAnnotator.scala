@@ -89,7 +89,7 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
       .setInputCols("tokens")
       .setOutputCol(s"$n" + "ngrams")
       .setN(n)
-//      .setNGramMinimum(n)                                                                                               //to get only ngrams, not n-i grams
+      .setNGramMinimum(n)                                                                                               //to get only ngrams, not n-i grams
 
     tokensPerDocuments.flatMap { tokens =>
       nGramModel.annotate(tokens)
