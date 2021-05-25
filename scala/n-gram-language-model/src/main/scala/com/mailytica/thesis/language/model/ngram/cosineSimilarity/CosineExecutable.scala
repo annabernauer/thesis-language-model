@@ -6,7 +6,7 @@ import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages, getVectorizerStages}
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.ExecutableSentencePrediction.getClass
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
-import com.mailytica.thesis.language.model.util.Utility.srcName
+import com.mailytica.thesis.language.model.util.Utility.{printToFile, srcName}
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -21,7 +21,7 @@ import scala.util.matching.Regex
 object CosineExecutable {
 
   val REGEX_PUNCTUATION: Regex = "(\\.|\\!|\\?|\\,|\\:)$".r
-  val n = 6
+  val n = 7
 
   val dirCrossfoldName = s"${srcName}_n_${n}"
   val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
@@ -83,6 +83,7 @@ object CosineExecutable {
                                                                                                                         //because they are needed for prediction
         val vectorizedData = vectorizeData(referenceProcessedDf).cache()
         vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "ngrams_reference", "ngrams_prediction", "cosine").show(20,false)
+        writeToFile(vectorizedData, fold)
 
         val cosineValues = vectorizedData
           .select("cosine")
@@ -91,6 +92,12 @@ object CosineExecutable {
 
         val crossfoldAverage = (cosineValues.sum) / cosineValues.length
         println(s"crossfoldAverage = $crossfoldAverage")
+
+        printToFile(new File(s"${specificDirectory}/${dirCrossfoldName}_fold_${fold}/cosineValues")) { p =>
+          cosineValues.foreach(p.println)
+          p.println(s"crossfoldAverage = $crossfoldAverage")
+        }
+
         crossfoldAverage
       }
 
@@ -191,6 +198,24 @@ object CosineExecutable {
 //      .save(trainingDataFile.getPath)
   }
 
+  def writeToFile(data: DataFrame, fold: Int) = {
+    val directoryFold = new File(s"${specificDirectory}/${dirCrossfoldName}_fold_${fold}")
+    if (!directoryFold.exists) {
+      directoryFold.mkdirs
+    }
+
+    val dataFile = new File(directoryFold.getPath + s"/evaluatedData")
+
+    data
+      .select("seeds","mergedPrediction", "referenceWithoutNewLines", "ngrams_reference", "ngrams_prediction","vectorizedCount_reference", "vectorizedCount_prediction" , "cosine")
+      .write
+      .format("com.databricks.spark.csv")
+      .option("header", "true")
+      .save(dataFile.getPath)
+
+    println("INFO: Preprocessed data is saved")
+  }
+
   def redirectConsoleLog() = {
     val console: PrintStream = System.out
 
@@ -201,6 +226,6 @@ object CosineExecutable {
 
     val fos = new FileOutputStream(logFile)
     val ps = new PrintStream(fos)
-    System.setOut(console)
+    System.setOut(ps)
   }
 }

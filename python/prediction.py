@@ -25,7 +25,7 @@ def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
   return ' '.join(text)
 
 n = 5
-epochs = 40  #30 old value
+epochs = 20  #30 old value
 embeddings = 100
 src_name = "messagesSmall"
 foldCount = 10
@@ -50,12 +50,24 @@ for fold in range(foldCount):
 
   df = spark.read.csv(f'resources/{srcName}/{foldDir}/testData/part-00000-fac4cd2f-9089-4789-90bf-147327fcf314-c000.csv', header="true", inferSchema="true")
 
-  seed_text = ("Mögliche Änderungswünsche nehmen wir sehr",
-  "Sollten Sie weitere Fragen haben",
-  "Alternativ würde ich mich jederzeit",
-  "Sehr geehrter Herr Blümlein")
+  # seeds = ("Mögliche Änderungswünsche nehmen wir sehr",
+  # "Sollten Sie weitere Fragen haben",
+  # "Alternativ würde ich mich jederzeit")
+
+  # result_lst = df.rdd.map(lambda row: row.getString(0)).collect()
+  # [print(x) for x in result_lst]
 
   seeds = [str(row.seeds) for row in df.select("seeds").collect()]
+  reference = [str(row.referenceSentences) for row in df.select("referenceSentences").collect()]
+
+  seedsWithReference = list(zip(seeds, reference))
+  [print(x) for x in seedsWithReference]
+
+# df.rdd.map()
+# val result = df.rdd.map(row => (row.getDouble(0), row.getDouble(1))).collect()
+#   result = df.rdd.map(row=> (row.getDouble(0), row.getDouble(1))).collect()
+
+
   # [print(f"{x}") for x in seeds]
 
   # seed_text = [seed.split() for seed in seed_text]
@@ -64,13 +76,13 @@ for fold in range(foldCount):
 
   ##seed_text = [seed.lower() for seed in seed_text]
 
-  x_seq_length = len(seeds[0].split(" ")) - 1
+  x_seq_length = len(seedsWithReference[0][0].split(" ")) - 1 ####-1 oder nicht? TODO https://machinelearningmastery.com/how-to-develop-a-word-level-neural-language-model-in-keras/
 
   generated_texts = []
 
-  for seed in seeds:
-    generated_text = generate_text_seq(model, tokenizer, x_seq_length, seed, 40)
-    generated_texts.append((seed, generated_text))
+  for seed in seedsWithReference:
+    generated_text = generate_text_seq(model, tokenizer, x_seq_length, seed[0], 40)
+    generated_texts.append((seed[0], seed[1], generated_text))
 
   print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   [print(text) for text in generated_texts]
@@ -79,6 +91,7 @@ for fold in range(foldCount):
 
   f = open(f"{targetFoldDir}/generated_texts.txt", "w")
   for text in generated_texts:
-      f.write(f"<SEED> {text[0]} <SEED_END> <GENERATED> {text[1]} <GENERATED_END>\n")
+      # f.write(f"<SEED> {text[0]} <SEED_END> <REFERENCE> {text[1]} <REFERENCE_END> <GENERATED> {text[0]} {text[2]} <GENERATED_END>\n")
+      f.write(f"<SEED> {text[0]} <SEED_END>\n")
   f.close()
 

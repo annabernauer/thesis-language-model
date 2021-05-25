@@ -1,5 +1,6 @@
 package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 
+//import com.codahale.metrics.MetricRegistry
 import com.johnsnowlabs.nlp.{DocumentAssembler, Finisher}
 import com.johnsnowlabs.nlp.annotator.Tokenizer
 import com.johnsnowlabs.nlp.annotators.sbd.pragmatic.SentenceDetector
@@ -11,6 +12,9 @@ import org.apache.spark.ml.feature.{CountVectorizer, HashingTF}
 import org.apache.spark.sql.catalyst.expressions.Explode
 
 object CosineSimilarityPipelines {
+
+//  val metricRegistry = new MetricRegistry
+//  metricRegistry.timer("Cosinus")
 
   def getPreprocessStages(n: Int = 3): Array[_ <: PipelineStage] = {
 
