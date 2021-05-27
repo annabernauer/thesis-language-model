@@ -2,9 +2,12 @@ package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
+import com.mailytica.thesis.language.model.ngram.Timer.{ngramSentenceModelTimerAnnotateTimer, stopwatch}
+import org.apache.commons.lang.time.StopWatch
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 
+import java.util.concurrent.TimeUnit
 import scala.annotation.tailrec
 
 class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorModel[NGramSentenceAnnotatorModel] {
@@ -33,22 +36,11 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
+    stopwatch.reset()
+    stopwatch.start()
+
     @tailrec
     def loop(joinedAnnotations: Seq[Annotation], count: Int = 0): Seq[Annotation] = {
-
-//      joinedAnnotations
-//        .lastOption
-//        .map( token => token.result)
-//        .map{
-//          case SENTENCE_END => joinedAnnotations
-//          case _ => count match {
-//            case 10 => joinedAnnotations
-//            case _ => {
-//              loop(joinedAnnotations ++ $(nGramAnnotatorModel).annotate(joinedAnnotations), count + 1)
-//            }
-//          }
-//        }
-//        .getOrElse(Seq.empty)
 
       joinedAnnotations.lastOption match {                                                                      //just for termination condition
         case Some(annotation) =>
@@ -67,9 +59,11 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
       }
     }
 
-    loop(annotations)
+    val prediction = loop(annotations)
       .filterNot(token => (token.result == SENTENCE_END) || (token.result == SENTENCE_START))          //remove SENTENCE_END and SENTENCE_START tags
 
+    ngramSentenceModelTimerAnnotateTimer.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
+    prediction
   }
 
 

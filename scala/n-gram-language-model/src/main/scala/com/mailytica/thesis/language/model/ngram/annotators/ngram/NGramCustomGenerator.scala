@@ -2,9 +2,12 @@ package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
 import com.johnsnowlabs.nlp.AnnotatorType.{CHUNK, TOKEN}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
+import com.mailytica.thesis.language.model.ngram.Timer.{nGramGeneratorTimer, stopwatch}
 import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
+
+import java.util.concurrent.TimeUnit
 
 class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGramCustomGenerator] {
 
@@ -34,6 +37,9 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
 
+    stopwatch.reset()
+    stopwatch.start()
+
     case class NgramChunkAnnotation(currentChunkIdx: Int, annotations: Seq[Annotation])
 
     val range = Range.inclusive($(nGramMinimum), $(n))
@@ -54,6 +60,9 @@ class NGramCustomGenerator(override val uid: String) extends AnnotatorModel[NGra
       }.toArray
       NgramChunkAnnotation(currentNgChunk.currentChunkIdx + chunksForCurrentWindow.length, currentNgChunk.annotations ++ chunksForCurrentWindow)
     })
+
+    nGramGeneratorTimer.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
+
     ngramsAnnotation.annotations
 
   }

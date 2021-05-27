@@ -4,10 +4,12 @@ import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
 import com.johnsnowlabs.nlp.annotator.NGramGenerator
 import com.johnsnowlabs.nlp.serialization.{MapFeature, SetFeature}
 import com.johnsnowlabs.nlp.{Annotation, AnnotatorModel}
+import com.mailytica.thesis.language.model.ngram.Timer.{ngramSentenceModelTimerAnnotateTimer, ngramTimerModelAnnotateTimer, stopwatch}
 import com.mailytica.thesis.language.model.util.Utility.DELIMITER
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 
+import java.util.concurrent.TimeUnit
 import scala.util.Try
 
 class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGramAnnotatorModel] {
@@ -39,6 +41,9 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
 
 
   override def annotate(annotations: Seq[Annotation]): Seq[Annotation] = {
+
+    stopwatch.reset()
+    stopwatch.start()
 
     def calculateTokenWithLMaxLikelihood(ngram: Annotation): Option[(String, Double)] = {
 
@@ -76,7 +81,7 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
         case None => (0, "0")
       }
 
-    tokenWithMaxLikelihood match {
+    val predictedToken = tokenWithMaxLikelihood match {
       case Some((tokenContent, tokenProbability)) =>
         Seq(Annotation(
           TOKEN,
@@ -87,6 +92,9 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
         )
       case None => Seq.empty
     }
+
+    ngramTimerModelAnnotateTimer.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
+    predictedToken
   }
 
 

@@ -3,6 +3,7 @@ package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
+import com.mailytica.thesis.language.model.ngram.Timer.{consoleReporter, cosineSimilarityTimer, stopwatch}
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages, getVectorizerStages}
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.ExecutableSentencePrediction.getClass
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
@@ -14,6 +15,7 @@ import org.apache.spark.sql.functions.{col, lit, size, udf}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import java.io.{File, FileOutputStream, PrintStream}
+import java.util.concurrent.TimeUnit
 import scala.io.{Codec, Source}
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
@@ -21,12 +23,14 @@ import scala.util.matching.Regex
 object CosineExecutable {
 
   val REGEX_PUNCTUATION: Regex = "(\\.|\\!|\\?|\\,|\\:)$".r
-  val n = 7
+  val n = 5
 
   val dirCrossfoldName = s"${srcName}_n_${n}"
   val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
 
-  val spark = SparkSession
+  consoleReporter.start(1, TimeUnit.MINUTES)
+
+  val spark: SparkSession = SparkSession
     .builder
     .config("spark.driver.maxResultSize", "5g")
     .config("spark.driver.memory", "12g")
@@ -59,7 +63,7 @@ object CosineExecutable {
 
     //    val allCrossFoldValues: Array[MetadataTypes] =
     val cosineCrossfoldAverages: Array[Double] = splitArray
-//      .take(2)
+      .take(2)
       .zipWithIndex
       .map { case (testData, fold) =>
         println("#################### index " + fold)
@@ -83,7 +87,7 @@ object CosineExecutable {
                                                                                                                         //because they are needed for prediction
         val vectorizedData = vectorizeData(referenceProcessedDf).cache()
         vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "ngrams_reference", "ngrams_prediction", "cosine").show(20,false)
-        writeToFile(vectorizedData, fold)
+//        writeToFile(vectorizedData, fold)
 
         val cosineValues = vectorizedData
           .select("cosine")
@@ -144,10 +148,13 @@ object CosineExecutable {
   }
 
   val cosineSimilarityUdf : UserDefinedFunction = udf{ (vectorA : Vector, vectorB: Vector) =>
-    cosineSimilarity(vectorA, vectorB)
+    cosineSimilarity(vectorA, vectorB) //cosineSimilarity of each row
   }
 
   def cosineSimilarity(vectorA: Vector, vectorB: Vector) : Double = {
+
+    stopwatch.reset()
+    stopwatch.start()
 
     val vectorArrayA = vectorA.toArray
     val vectorArrayB = vectorB.toArray
@@ -164,6 +171,8 @@ object CosineExecutable {
       .zip(vectorArrayB)
       .map{case (x,y) => x*y }
       .sum
+
+    cosineSimilarityTimer.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
 
     val div : Double = normASqrt * normBSqrt
     if( div == 0 )
@@ -226,6 +235,7 @@ object CosineExecutable {
 
     val fos = new FileOutputStream(logFile)
     val ps = new PrintStream(fos)
-    System.setOut(ps)
+//    System.setOut(ps)
+    System.setOut(console)
   }
 }

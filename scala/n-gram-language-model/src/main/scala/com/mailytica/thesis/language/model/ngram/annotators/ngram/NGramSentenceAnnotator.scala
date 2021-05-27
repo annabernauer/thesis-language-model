@@ -1,11 +1,16 @@
 package com.mailytica.thesis.language.model.ngram.annotators.ngram
 
+import com.codahale.metrics.Timer
 import com.johnsnowlabs.nlp.AnnotatorApproach
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
+import com.mailytica.thesis.language.model.ngram.Timer.{ngramSentenceTimerTrain, ngramTimerTrain, stopwatch}
+import org.apache.commons.lang.time.StopWatch
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Dataset
+
+import java.util.concurrent.TimeUnit
 
 class NGramSentenceAnnotator (override val uid: String) extends AnnotatorApproach[NGramSentenceAnnotatorModel]{
   override val description: String = "NGRAM_SENTENCE_ANNOTATOR"
@@ -23,17 +28,25 @@ class NGramSentenceAnnotator (override val uid: String) extends AnnotatorApproac
 
   override def train(dataset: Dataset[_], recursivePipeline: Option[PipelineModel]): NGramSentenceAnnotatorModel = {
 
+    stopwatch.reset()
+    stopwatch.start()
+
     val nGramAnnotator = new NGramAnnotator()
       .setInputCols("token")
       .setOutputCol("ngramsProbability")
       .setN($(n))
 
+    stopwatch.split()
+
     val model = nGramAnnotator.train(dataset)
+
+//    stopwatch.stop()
+
+//    ngramTimerTrain.update(stopwatch.getTime - stopwatch.getSplitTime, TimeUnit.MILLISECONDS)
+    ngramSentenceTimerTrain.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
 
     new NGramSentenceAnnotatorModel()
       .setNGramAnnotatorModel(model)
-
+      .setN($(n))
   }
-
-
 }
