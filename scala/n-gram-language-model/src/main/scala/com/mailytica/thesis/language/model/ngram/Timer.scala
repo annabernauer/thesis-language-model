@@ -14,6 +14,9 @@ object Timer {
   val ngramSentenceModelTimerAnnotateTimer: Timer = metricRegistry.timer("NGramSentenceAnnotatorModel_annotate")
   val ngramTimerModelAnnotateTimer: Timer = metricRegistry.timer("NGramAnnotatorModel_annotate")
   val cosineSimilarityTimer: Timer = metricRegistry.timer("CosineExecutable_cosineSimilarity")
+  val cosineNormASqurt: Timer = metricRegistry.timer("CosineExecutable_normASqrt")
+  val cosineNormBSqurt: Timer = metricRegistry.timer("CosineExecutable_normBSqrt")
+  val cosineDotProduct: Timer = metricRegistry.timer("CosineExecutable_dotproduct")
   val nGramGeneratorTimer: Timer = metricRegistry.timer("NGramCustomGenerator_annotate")
 
   val consoleReporter: ConsoleReporter = ConsoleReporter

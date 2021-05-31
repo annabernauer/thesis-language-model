@@ -1,20 +1,15 @@
 package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 
-//import com.codahale.metrics.MetricRegistry
-import com.johnsnowlabs.nlp.{DocumentAssembler, Finisher}
 import com.johnsnowlabs.nlp.annotator.Tokenizer
-import com.johnsnowlabs.nlp.annotators.sbd.pragmatic.SentenceDetector
-import com.mailytica.thesis.language.model.ngram.annotators.{RedundantTextTrimmer, SentenceEndMarker, SentenceSplitter}
+import com.johnsnowlabs.nlp.{DocumentAssembler, Finisher}
 import com.mailytica.thesis.language.model.ngram.annotators.ngram.{NGramCustomGenerator, NGramSentenceAnnotator}
+import com.mailytica.thesis.language.model.ngram.annotators.{RedundantTextTrimmer, SentenceEndMarker, SentenceSplitter}
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.annotators.{ExplodedTransformer, SentenceNewLineRemover, SentenceSeedExtractor, TokensMerger}
 import org.apache.spark.ml.PipelineStage
-import org.apache.spark.ml.feature.{CountVectorizer, HashingTF}
-import org.apache.spark.sql.catalyst.expressions.Explode
+import org.apache.spark.ml.feature.HashingTF
 
 object CosineSimilarityPipelines {
 
-//  val metricRegistry = new MetricRegistry
-//  metricRegistry.timer("Cosinus")
 
   def getPreprocessStages(n: Int = 3): Array[_ <: PipelineStage] = {
 
@@ -22,11 +17,11 @@ object CosineSimilarityPipelines {
       .setInputCol("data")
       .setOutputCol("document")
       .setCleanupMode("disabled")
-
+//timer(dupl)
     val redundantTextTrimmer = new RedundantTextTrimmer()
       .setInputCols(documentAssembler.getOutputCol)
       .setOutputCol("trimmedDocument")
-
+//timer(dupl)
     val sentenceSplitter = new SentenceSplitter()
       .setInputCols(redundantTextTrimmer.getOutputCol)
       .setOutputCol("sentences")
@@ -52,7 +47,7 @@ object CosineSimilarityPipelines {
     val tokenizer = new Tokenizer()
       .setInputCols(documentAssemblerDue.getOutputCol)
       .setOutputCol("token")
-
+//timer
     val sentenceSeed = new SentenceSeedExtractor()
       .setInputCols(tokenizer.getOutputCol)
       .setOutputCol("seeds")
@@ -71,7 +66,7 @@ object CosineSimilarityPipelines {
     val tokenizer = new Tokenizer()
       .setInputCols(inputCol)
       .setOutputCol("tokens_" + identifier)
-
+//timer
     val nGramCustomGenerator = new NGramCustomGenerator()
       .setInputCols(tokenizer.getOutputCol)
       .setOutputCol("ngrams_" + identifier)
@@ -97,11 +92,12 @@ object CosineSimilarityPipelines {
       .setInputCol("seeds")
       .setOutputCol("document")
       .setCleanupMode("disabled")
-
+//timer
     val redundantTextTrimmer = new RedundantTextTrimmer()
       .setInputCols("document")
       .setOutputCol("trimmedDocument")
 
+    //timer, sentencesplitter and endmarker mergen?
     val sentenceSplitter = new SentenceSplitter()
       .setInputCols("trimmedDocument")
       .setOutputCol("sentences")
@@ -133,6 +129,7 @@ object CosineSimilarityPipelines {
           .setOutputCol("referenceDocument")
           .setCleanupMode("disabled")
 
+    //timer
         val sentenceNewLineRemover = new SentenceNewLineRemover()
           .setInputCols("referenceDocument")
           .setOutputCol("referenceWithoutNewLines")

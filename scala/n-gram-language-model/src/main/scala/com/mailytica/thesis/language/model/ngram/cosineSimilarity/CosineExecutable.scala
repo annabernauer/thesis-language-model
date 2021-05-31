@@ -3,11 +3,13 @@ package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
-import com.mailytica.thesis.language.model.ngram.Timer.{consoleReporter, cosineSimilarityTimer, stopwatch}
+import com.mailytica.thesis.language.model.ngram.Timer.{consoleReporter, cosineDotProduct, cosineNormASqurt, cosineNormBSqurt, cosineSimilarityTimer, stopwatch}
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages, getVectorizerStages}
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.ExecutableSentencePrediction.getClass
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
 import com.mailytica.thesis.language.model.util.Utility.{printToFile, srcName}
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang.time.StopWatch
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -16,6 +18,9 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import java.io.{File, FileOutputStream, PrintStream}
 import java.util.concurrent.TimeUnit
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.io.{Codec, Source}
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
@@ -27,6 +32,15 @@ object CosineExecutable {
 
   val dirCrossfoldName = s"${srcName}_n_${n}"
   val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
+
+  if (specificDirectory.exists()) {
+    println(s"Directory ${dirCrossfoldName} already exists. Do you want to overwrite it? [y|n]")
+    val input: String = readLine()
+    input.charAt(0) match {
+      case 'y' => FileUtils.deleteQuietly(specificDirectory)
+      case _ =>
+    }
+  }
 
   consoleReporter.start(1, TimeUnit.MINUTES)
 
@@ -63,7 +77,7 @@ object CosineExecutable {
 
     //    val allCrossFoldValues: Array[MetadataTypes] =
     val cosineCrossfoldAverages: Array[Double] = splitArray
-      .take(2)
+      .take(4)
       .zipWithIndex
       .map { case (testData, fold) =>
         println("#################### index " + fold)
@@ -152,6 +166,8 @@ object CosineExecutable {
   }
 
   def cosineSimilarity(vectorA: Vector, vectorB: Vector) : Double = {
+    val stopwatch2 = new StopWatch
+    stopwatch2.start()
 
     stopwatch.reset()
     stopwatch.start()
@@ -159,26 +175,52 @@ object CosineExecutable {
     val vectorArrayA = vectorA.toArray
     val vectorArrayB = vectorB.toArray
 
-    val normASqrt : Double = Math.sqrt(vectorArrayA.map{ value =>
-      Math.pow(value , 2)
-    }.sum)
+    val normASqrt : Future[Double] = Future {
+      Math.sqrt(vectorArrayA.map { value =>
+        Math.pow(value, 2)
+      }.sum)
+    }
 
-    val normBSqrt : Double = Math.sqrt(vectorArrayB.map{ value =>
-      Math.pow(value , 2)
-    }.sum)
+    cosineNormASqurt.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
+    stopwatch.reset()
+    stopwatch.start()
 
-    val dotProduct : Double =  vectorArrayA
-      .zip(vectorArrayB)
-      .map{case (x,y) => x*y }
-      .sum
+    val normBSqrt : Future[Double] = Future {
+      Math.sqrt(vectorArrayB.map { value =>
+        Math.pow(value, 2)
+      }.sum)
+    }
 
-    cosineSimilarityTimer.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
+    cosineNormBSqurt.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
+    stopwatch.reset()
+    stopwatch.start()
 
-    val div : Double = normASqrt * normBSqrt
-    if( div == 0 )
-      0
-    else
-      dotProduct / div
+    val dotProduct : Future[Double] =  Future {
+      vectorArrayA
+        .zip(vectorArrayB)
+        .map { case (x, y) => x * y }
+        .sum
+    }
+
+    cosineDotProduct.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
+
+    val cosinusFuture = normASqrt
+      .zip(normBSqrt)
+      .zip(dotProduct)
+      .map{
+        case ((normASqrt, normBSqrt), dotProduct) =>  {
+          val div : Double = normASqrt * normBSqrt
+          if( div == 0 )
+            0
+          else
+            dotProduct / div
+        }
+      }
+
+    val result = Await.result(cosinusFuture, Duration(1, TimeUnit.MINUTES))
+
+    cosineSimilarityTimer.update(stopwatch2.getTime, TimeUnit.MILLISECONDS)
+    result
   }
 
   def writeTestAndTrainingsDataToFile(preprocessed: DataFrame, trainingData: DataFrame, fold: Int) = {

@@ -10,10 +10,10 @@ object DeepLearningCosineExecutable {
     val lines = bufferedSource.getLines.toList
     bufferedSource.close
 
-    lines.map(line => )
+//    lines.map(line => )
     //read file
     //get seed and prediction
-    val predctionMap : List[String, String] = List.empty
+//    val predctionMap : List[String, String] = List.empty
 
 
 

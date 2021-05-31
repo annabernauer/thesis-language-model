@@ -40,8 +40,6 @@ class NGramSentenceAnnotator (override val uid: String) extends AnnotatorApproac
 
     val model = nGramAnnotator.train(dataset)
 
-//    stopwatch.stop()
-
 //    ngramTimerTrain.update(stopwatch.getTime - stopwatch.getSplitTime, TimeUnit.MILLISECONDS)
     ngramSentenceTimerTrain.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
 
