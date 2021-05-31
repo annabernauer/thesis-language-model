@@ -12,13 +12,13 @@ object TextMatching extends AbstractMatching {
 
   override def getSpecificStages(): Array[_ <: PipelineStage] = {
 
-    writeToFile("n-gram-language-model\\target\\textToMatch.txt", exactMatches)
+    writeToFile("n-gram-language-model/target/textToMatch.txt", exactMatches)
 
     val textMatcher = new TextMatcher()
       .setInputCols(Array("document", "token"))
       .setOutputCol("matchedText")
       .setCaseSensitive(false)
-      .setEntities("n-gram-language-model\\target\\textToMatch.txt", "TEXT")
+      .setEntities("n-gram-language-model/target/textToMatch.txt", "TEXT")
 
     Array(textMatcher)
 

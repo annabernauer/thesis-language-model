@@ -50,22 +50,22 @@ class NGramEvaluation (override val uid: String) extends AnnotatorApproach[NGram
     val historiesMap: Map[String, Int] = getCountedMap(histories)
     val sequencesMap: Map[String, Int] = getCountedMap(sequences)
 
-    val file : File = new File("target\\sentencePrediction\\")
+    val file : File = new File("target/sentencePrediction/")
     FileUtils.deleteQuietly(file)
     if (!file.exists) {
       file.mkdir
     }
 
-    printToFile(new File("target\\sentencePrediction\\dictionary.txt")) { p =>
+    printToFile(new File("target/sentencePrediction/dictionary.txt")) { p =>
       dictionary.foreach(p.println)
     }
-    printToFile(new File("target\\sentencePrediction\\historiesMap.txt")) { p =>
+    printToFile(new File("target/sentencePrediction/historiesMap.txt")) { p =>
       historiesMap.foreach(p.println)
     }
-    printToFile(new File("target\\sentencePrediction\\sequencesMap.txt")) { p =>
+    printToFile(new File("target/sentencePrediction/sequencesMap.txt")) { p =>
       sequencesMap.foreach(p.println)
     }
-    printToFile(new File("target\\sentencePrediction\\sequencesKeys.txt")) { p =>
+    printToFile(new File("target/sentencePrediction/sequencesKeys.txt")) { p =>
       sequencesMap.keys.foreach(p.println)
     }
     print("INFO: Files were created\n")

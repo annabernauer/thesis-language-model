@@ -52,7 +52,7 @@ object TextSplitting extends App {
     .setInputCols("removed_stopwords")
     .setOutputCol("lemma")
     .setDictionary(
-      "n-gram-language-model\\src\\main\\resources\\textSplittingDemo\\AntBNC_lemmas_ver_001.txt",
+      "n-gram-language-model/src/main/resources/textSplittingDemo/AntBNC_lemmas_ver_001.txt",
       "\t", "->")
 
   val dateMatcher = new DateMatcher()

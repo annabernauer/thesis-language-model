@@ -60,7 +60,7 @@ class NGramAnnotatorModel(override val uid: String) extends AnnotatorModel[NGram
         .map { token => getTokenWithLikelihood(token) }
         .sortBy { case (token, likelihood) => likelihood }
 
-//      printToFile(new File(s"target\\sentencePrediction\\likelihood_${ngram.result.replace(" ", "_").replaceAll("[,|.|\"]", "sz")}.txt")) { p =>
+//      printToFile(new File(s"target/sentencePrediction/likelihood_${ngram.result.replace(" ", "_").replaceAll("[,|.|\"]", "sz")}.txt")) { p =>
 //        tokensWithLikelihood.foreach(p.println)
 //      }
 
