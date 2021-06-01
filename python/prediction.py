@@ -5,11 +5,14 @@ from keras.models import load_model
 from pickle import load
 from pathlib import Path
 from pyspark.sql import *
+import glob
 
 def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
   text = []
 
-  for _ in range(n_words):
+  # for _ in range(n_words):
+  i = 0
+  while i < n_words:
     encoded = tokenizer.texts_to_sequences([seed_text])[0]
     encoded = pad_sequences([encoded], maxlen = text_seq_length, truncating='pre')
 
@@ -22,13 +25,17 @@ def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
         break
     seed_text = seed_text + ' ' + predicted_word
     text.append(predicted_word)
+    if predicted_word == "<SENTENCE_END>":
+      print("in Sentence end\n")
+      break
+    i += 1
   return ' '.join(text)
 
 n = 5
 epochs = 20  #30 old value
 embeddings = 100
 src_name = "messagesSmall"
-foldCount = 10
+foldCount = 1
 
 srcName = f"{src_name}_n_{n}"
 
@@ -48,7 +55,7 @@ for fold in range(foldCount):
     .config("spark.some.config.option", "some-value") \
     .getOrCreate()
 
-  df = spark.read.csv(f'resources/{srcName}/{foldDir}/testData/part-00000-fac4cd2f-9089-4789-90bf-147327fcf314-c000.csv', header="true", inferSchema="true")
+  df = spark.read.csv(glob.glob(f'resources/{srcName}/{foldDir}/testData/*.csv'), header="true", inferSchema="true")
 
   # seeds = ("Mögliche Änderungswünsche nehmen wir sehr",
   # "Sollten Sie weitere Fragen haben",
@@ -62,6 +69,22 @@ for fold in range(foldCount):
 
   seedsWithReference = list(zip(seeds, reference))
   [print(x) for x in seedsWithReference]
+
+  ############
+  seedsTest = (
+  "<SENTENCE_START> vielen Dank für",
+  "<SENTENCE_START> Sehr geehrte Frau",
+  "<SENTENCE_START> hiermit bedanke ich")
+
+  referenceTest = (
+    "<SENTENCE_START> vielen Dank für Ihre Nachfrage hinsichtlich des Lieferdatums Ihrer Bestellung. <SENTENCE_END>",
+    "<SENTENCE_START> Sehr geehrte Frau Hilgers, <SENTENCE_END>",
+    "<SENTENCE_START> hiermit bedanke ich mich für Ihre Bestellung. <SENTENCE_END>"
+  )
+  seedsWithReference = list(zip(seedsTest, referenceTest))
+  [print(x) for x in seedsWithReference]
+  ###########
+
 
 # df.rdd.map()
 # val result = df.rdd.map(row => (row.getDouble(0), row.getDouble(1))).collect()
@@ -82,6 +105,7 @@ for fold in range(foldCount):
 
   for seed in seedsWithReference:
     generated_text = generate_text_seq(model, tokenizer, x_seq_length, seed[0], 40)
+    print(f"{seed[0]}, {seed[1]}, {generated_text}")
     generated_texts.append((seed[0], seed[1], generated_text))
 
   print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -91,7 +115,7 @@ for fold in range(foldCount):
 
   f = open(f"{targetFoldDir}/generated_texts.txt", "w")
   for text in generated_texts:
-      # f.write(f"<SEED> {text[0]} <SEED_END> <REFERENCE> {text[1]} <REFERENCE_END> <GENERATED> {text[0]} {text[2]} <GENERATED_END>\n")
-      f.write(f"<SEED> {text[0]} <SEED_END>\n")
+      f.write(f"<SEED> {text[0]} <SEED_END> <REFERENCE> {text[1]} <REFERENCE_END> <GENERATED> {text[0]} {text[2]} <GENERATED_END>\n")
+      # f.write(f"<SEED> {text[0]} <SEED_END>\n")
   f.close()
 
