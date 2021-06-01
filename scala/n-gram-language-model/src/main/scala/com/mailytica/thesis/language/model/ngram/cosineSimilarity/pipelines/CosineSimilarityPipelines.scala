@@ -1,4 +1,4 @@
-package com.mailytica.thesis.language.model.ngram.cosineSimilarity
+package com.mailytica.thesis.language.model.ngram.cosineSimilarity.pipelines
 
 import com.johnsnowlabs.nlp.annotator.Tokenizer
 import com.johnsnowlabs.nlp.{DocumentAssembler, Finisher}
@@ -17,11 +17,11 @@ object CosineSimilarityPipelines {
       .setInputCol("data")
       .setOutputCol("document")
       .setCleanupMode("disabled")
-//timer(dupl)
+    //timer(dupl)
     val redundantTextTrimmer = new RedundantTextTrimmer()
       .setInputCols(documentAssembler.getOutputCol)
       .setOutputCol("trimmedDocument")
-//timer(dupl)
+    //timer(dupl)
     val sentenceSplitter = new SentenceSplitter()
       .setInputCols(redundantTextTrimmer.getOutputCol)
       .setOutputCol("sentences")
@@ -35,7 +35,7 @@ object CosineSimilarityPipelines {
       .setOutputCols("finishedSentences")
       .setIncludeMetadata(false)
 
-    val explodedTransformer = new ExplodedTransformer()         //one column per sentence, references
+    val explodedTransformer = new ExplodedTransformer() //one column per sentence, references
       .setInputCol(finisher.getOutputCols.head)
       .setOutputCol("referenceSentences")
 
@@ -47,7 +47,7 @@ object CosineSimilarityPipelines {
     val tokenizer = new Tokenizer()
       .setInputCols(documentAssemblerDue.getOutputCol)
       .setOutputCol("token")
-//timer
+    //timer
     val sentenceSeed = new SentenceSeedExtractor()
       .setInputCols(tokenizer.getOutputCol)
       .setOutputCol("seeds")
@@ -66,7 +66,7 @@ object CosineSimilarityPipelines {
     val tokenizer = new Tokenizer()
       .setInputCols(inputCol)
       .setOutputCol("tokens_" + identifier)
-//timer
+    //timer
     val nGramCustomGenerator = new NGramCustomGenerator()
       .setInputCols(tokenizer.getOutputCol)
       .setOutputCol("ngrams_" + identifier)
@@ -92,7 +92,7 @@ object CosineSimilarityPipelines {
       .setInputCol("seeds")
       .setOutputCol("document")
       .setCleanupMode("disabled")
-//timer
+    //timer
     val redundantTextTrimmer = new RedundantTextTrimmer()
       .setInputCols("document")
       .setOutputCol("trimmedDocument")
@@ -123,16 +123,16 @@ object CosineSimilarityPipelines {
   }
 
   def getReferenceStages(): Array[_ <: PipelineStage] = {
-        //reference processing -> removing of new lines
-        val documentAssemblerReference = new DocumentAssembler()
-          .setInputCol("referenceSentences")
-          .setOutputCol("referenceDocument")
-          .setCleanupMode("disabled")
+    //reference processing -> removing of new lines
+    val documentAssemblerReference = new DocumentAssembler()
+      .setInputCol("referenceSentences")
+      .setOutputCol("referenceDocument")
+      .setCleanupMode("disabled")
 
     //timer
-        val sentenceNewLineRemover = new SentenceNewLineRemover()
-          .setInputCols("referenceDocument")
-          .setOutputCol("referenceWithoutNewLines")
+    val sentenceNewLineRemover = new SentenceNewLineRemover()
+      .setInputCols("referenceDocument")
+      .setOutputCol("referenceWithoutNewLines")
 
     Array(documentAssemblerReference, sentenceNewLineRemover)
   }

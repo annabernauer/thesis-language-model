@@ -60,7 +60,7 @@ class NGramSentenceAnnotatorModel(override val uid: String) extends AnnotatorMod
     }
 
     val prediction = loop(annotations)
-      .filterNot(token => (token.result == SENTENCE_END) || (token.result == SENTENCE_START))          //remove SENTENCE_END and SENTENCE_START tags
+//      .filterNot(token => (token.result == SENTENCE_END) || (token.result == SENTENCE_START))          //remove SENTENCE_END and SENTENCE_START tags
 
     ngramSentenceModelTimerAnnotateTimer.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
     prediction

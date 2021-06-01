@@ -4,7 +4,8 @@ import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
 import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
 import com.mailytica.thesis.language.model.ngram.Timer.{consoleReporter, cosineDotProduct, cosineNormASqurt, cosineNormBSqurt, cosineSimilarityTimer, stopwatch}
-import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages, getVectorizerStages}
+import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarity.calculateCosineValues
+import com.mailytica.thesis.language.model.ngram.cosineSimilarity.pipelines.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages, getVectorizerStages}
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.ExecutableSentencePrediction.getClass
 import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
 import com.mailytica.thesis.language.model.util.Utility.{printToFile, srcName}
@@ -77,7 +78,7 @@ object CosineExecutable {
 
     //    val allCrossFoldValues: Array[MetadataTypes] =
     val cosineCrossfoldAverages: Array[Double] = splitArray
-      .take(4)
+//      .take(4)
       .zipWithIndex
       .map { case (testData, fold) =>
         println("#################### index " + fold)
@@ -99,16 +100,10 @@ object CosineExecutable {
 
         val referenceProcessedDf: DataFrame = processReferenceData(predictionDf)                                      //remove new lines from reference, can't be removed before
                                                                                                                         //because they are needed for prediction
-        val vectorizedData = vectorizeData(referenceProcessedDf).cache()
-        vectorizedData.select("seeds","mergedPrediction", "referenceWithoutNewLines", "ngrams_reference", "ngrams_prediction", "cosine").show(20,false)
-//        writeToFile(vectorizedData, fold)
+        val vectorizedData = CosineSimilarity.vectorizeData(referenceProcessedDf, "mergedPrediction", "referenceWithoutNewLines").cache()
 
-        val cosineValues = vectorizedData
-          .select("cosine")
-          .as[Double]
-          .collect()
+        val (cosineValues, crossfoldAverage) = CosineSimilarity.calculateCosineValues(vectorizedData, "mergedPrediction", "referenceWithoutNewLines")
 
-        val crossfoldAverage = (cosineValues.sum) / cosineValues.length
         println(s"crossfoldAverage = $crossfoldAverage")
 
         printToFile(new File(s"${specificDirectory}/${dirCrossfoldName}_fold_${fold}/cosineValues")) { p =>
@@ -147,81 +142,7 @@ object CosineExecutable {
     processed
   }
 
-  def vectorizeData(df: DataFrame) = {
 
-    val vectorizePipeline = new Pipeline()
-    vectorizePipeline.setStages(
-      getVectorizerStages("mergedPrediction", "prediction") ++
-        getVectorizerStages("referenceWithoutNewLines", "reference"))
-
-    val pipelineModel: PipelineModel = vectorizePipeline.fit(df)
-    val annotatedHypothesis: DataFrame = pipelineModel.transform(df)
-
-    val withCosineColumn: DataFrame = annotatedHypothesis.withColumn("cosine", cosineSimilarityUdf(col("vectorizedCount_prediction"), col("vectorizedCount_reference")))
-    withCosineColumn
-  }
-
-  val cosineSimilarityUdf : UserDefinedFunction = udf{ (vectorA : Vector, vectorB: Vector) =>
-    cosineSimilarity(vectorA, vectorB) //cosineSimilarity of each row
-  }
-
-  def cosineSimilarity(vectorA: Vector, vectorB: Vector) : Double = {
-    val stopwatch2 = new StopWatch
-    stopwatch2.start()
-
-    stopwatch.reset()
-    stopwatch.start()
-
-    val vectorArrayA = vectorA.toArray
-    val vectorArrayB = vectorB.toArray
-
-    val normASqrt : Future[Double] = Future {
-      Math.sqrt(vectorArrayA.map { value =>
-        Math.pow(value, 2)
-      }.sum)
-    }
-
-    cosineNormASqurt.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
-    stopwatch.reset()
-    stopwatch.start()
-
-    val normBSqrt : Future[Double] = Future {
-      Math.sqrt(vectorArrayB.map { value =>
-        Math.pow(value, 2)
-      }.sum)
-    }
-
-    cosineNormBSqurt.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
-    stopwatch.reset()
-    stopwatch.start()
-
-    val dotProduct : Future[Double] =  Future {
-      vectorArrayA
-        .zip(vectorArrayB)
-        .map { case (x, y) => x * y }
-        .sum
-    }
-
-    cosineDotProduct.update(stopwatch.getTime, TimeUnit.MILLISECONDS)
-
-    val cosinusFuture = normASqrt
-      .zip(normBSqrt)
-      .zip(dotProduct)
-      .map{
-        case ((normASqrt, normBSqrt), dotProduct) =>  {
-          val div : Double = normASqrt * normBSqrt
-          if( div == 0 )
-            0
-          else
-            dotProduct / div
-        }
-      }
-
-    val result = Await.result(cosinusFuture, Duration(1, TimeUnit.MINUTES))
-
-    cosineSimilarityTimer.update(stopwatch2.getTime, TimeUnit.MILLISECONDS)
-    result
-  }
 
   def writeTestAndTrainingsDataToFile(preprocessed: DataFrame, trainingData: DataFrame, fold: Int) = {
 
@@ -277,7 +198,7 @@ object CosineExecutable {
 
     val fos = new FileOutputStream(logFile)
     val ps = new PrintStream(fos)
-//    System.setOut(ps)
-    System.setOut(console)
+    System.setOut(ps)
+//    System.setOut(console)
   }
 }

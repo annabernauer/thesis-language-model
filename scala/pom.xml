@@ -178,24 +178,4 @@
 
     </properties>
 
-    <distributionManagement>
-        <repository>
-            <id>internal</id>
-            <url>file://H:/development/mailytica-artifacts</url>
-        </repository>
-    </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>github-mailytica-artifacts</id>
-            <url>https://raw.githubusercontent.com/lorenz-nlp/mailytica-artifacts/master</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
 </project>
