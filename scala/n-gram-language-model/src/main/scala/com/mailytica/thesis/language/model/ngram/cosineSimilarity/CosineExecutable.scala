@@ -17,7 +17,7 @@ import scala.util.matching.Regex
 object CosineExecutable {
 
   val REGEX_PUNCTUATION: Regex = "(\\.|\\!|\\?|\\,|\\:)$".r
-  val n = 5
+  val n = 6
 
   val dirCrossfoldName = s"${srcName}_n_${n}"
   val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
@@ -31,7 +31,7 @@ object CosineExecutable {
     }
   }
 
-  consoleReporter.start(1, TimeUnit.MINUTES)
+  consoleReporter.start(1, TimeUnit.HOURS)
 
   val spark: SparkSession = SparkSession
     .builder
@@ -101,7 +101,8 @@ object CosineExecutable {
       }
 
     val totalCosineAvg = cosineCrossfoldAverages.sum / cosineCrossfoldAverages.length
-    print(s"n = $n \ntotalCosineAvg = $totalCosineAvg")
+    println(s"n = $n \ntotalCosineAvg = $totalCosineAvg")
+    println(s"srcFile = $srcName")
   }
 
 
@@ -184,7 +185,7 @@ object CosineExecutable {
 
     val fos = new FileOutputStream(logFile)
     val ps = new PrintStream(fos)
-    System.setOut(ps)
-//    System.setOut(console)
+//    System.setOut(ps)
+    System.setOut(console)
   }
 }
