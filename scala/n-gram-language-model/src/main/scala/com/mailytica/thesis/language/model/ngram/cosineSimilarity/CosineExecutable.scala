@@ -1,28 +1,16 @@
 package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 
-import com.johnsnowlabs.nlp.{Annotation, LightPipeline}
-import com.johnsnowlabs.nlp.util.io.ResourceHelper
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
-import com.mailytica.thesis.language.model.ngram.Timer.{consoleReporter, cosineDotProduct, cosineNormASqurt, cosineNormBSqurt, cosineSimilarityTimer, stopwatch}
-import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarity.calculateCosineValues
-import com.mailytica.thesis.language.model.ngram.cosineSimilarity.pipelines.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages, getVectorizerStages}
-import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.ExecutableSentencePrediction.getClass
-import com.mailytica.thesis.language.model.ngram.pipelines.nGramSentences.NGramSentencePrediction.getStages
+import com.mailytica.thesis.language.model.ngram.Timer.consoleReporter
+import com.mailytica.thesis.language.model.ngram.cosineSimilarity.pipelines.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages}
 import com.mailytica.thesis.language.model.util.Utility.{printToFile, srcName}
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang.time.StopWatch
-import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions.{col, lit, size, udf}
+import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import java.io.{File, FileOutputStream, PrintStream}
 import java.util.concurrent.TimeUnit
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
-import scala.io.{Codec, Source}
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
@@ -50,14 +38,12 @@ object CosineExecutable {
     .config("spark.driver.maxResultSize", "5g")
     .config("spark.driver.memory", "12g")
     .config("spark.sql.codegen.wholeStage", "false") // deactivated as the compiled grows to big (exception)
-    .master(s"local[3]") //threads = 6
+    .master(s"local[6]") //threads = 6
     .getOrCreate()
 
   def main(args: Array[String]): Unit = {
 
     redirectConsoleLog()
-
-    import spark.implicits._
 
     val nlpPipeline = new Pipeline()
 

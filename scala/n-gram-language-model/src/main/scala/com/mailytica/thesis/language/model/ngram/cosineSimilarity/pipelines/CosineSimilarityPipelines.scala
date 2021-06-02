@@ -74,7 +74,7 @@ object CosineSimilarityPipelines {
           .setInputCols(documentAssembler.getOutputCol)
           .setOutputCol("tokens_" + identifier)
         (Option(documentAssembler), tokenizer)
-      case false =>
+      case false =>                                                 //CosineExecutable needs no documentassembler, bc data is already in annotations
         val tokenizer = new Tokenizer()
           .setInputCols(inputCol)
           .setOutputCol("tokens_" + identifier)

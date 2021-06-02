@@ -15,7 +15,7 @@ object DeepLearningCosineExecutable {
     .config("spark.driver.maxResultSize", "5g")
     .config("spark.driver.memory", "12g")
     .config("spark.sql.codegen.wholeStage", "false") // deactivated as the compiled grows to big (exception)
-    .master(s"local[3]") //threads = 6
+    .master(s"local[6]") //threads = 6
     .getOrCreate()
 
   val SEED_REGEX = "(?<=<SEED>)(.*?)(?=<SEED_END>)".r()
