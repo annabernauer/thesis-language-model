@@ -1,12 +1,11 @@
 package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 
 import com.mailytica.thesis.language.model.ngram.Timer.{cosineDotProduct, cosineNormASqurt, cosineNormBSqurt, cosineSimilarityTimer, stopwatch}
-import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineExecutable.spark
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.pipelines.CosineSimilarityPipelines.getVectorizerStages
 import org.apache.commons.lang.time.StopWatch
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}
 
@@ -17,13 +16,12 @@ import scala.concurrent.duration.Duration
 
 object CosineSimilarity {
 
-
-  def vectorizeData(df: DataFrame, predictionInputCol: String, referenceInputCol: String) = {
+  def vectorizeData(df: DataFrame, predictionInputCol: String, referenceInputCol: String, needsDocAssembl: Boolean) = {
 
     val vectorizePipeline = new Pipeline()
     vectorizePipeline.setStages(
-      getVectorizerStages(predictionInputCol, "prediction") ++
-        getVectorizerStages(referenceInputCol, "reference"))
+      getVectorizerStages(predictionInputCol, "prediction", needsDocAssembl) ++
+        getVectorizerStages(referenceInputCol, "reference", needsDocAssembl))
 
     val pipelineModel: PipelineModel = vectorizePipeline.fit(df)
     val annotatedHypothesis: DataFrame = pipelineModel.transform(df)
@@ -95,7 +93,7 @@ object CosineSimilarity {
   }
 
 
-  def calculateCosineValues(vectorizedData: DataFrame, predictionInputCol: String, referenceInputCol: String) = {
+  def calculateCosineValues(vectorizedData: DataFrame, predictionInputCol: String, referenceInputCol: String, spark: SparkSession) = {
 
     import spark.implicits._
 

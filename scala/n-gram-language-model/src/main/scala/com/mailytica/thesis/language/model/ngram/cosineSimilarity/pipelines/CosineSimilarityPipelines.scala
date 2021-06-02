@@ -61,17 +61,31 @@ object CosineSimilarityPipelines {
     Array(documentAssembler, redundantTextTrimmer, sentenceSplitter, markedSentenceEnds, finisher, explodedTransformer, documentAssemblerDue, tokenizer, sentenceSeed, finisherDue)
   }
 
-  def getVectorizerStages(inputCol: String, identifier: String): Array[_ <: PipelineStage] = {
+  def getVectorizerStages(inputCol: String, identifier: String, needsDocAssembl: Boolean): Array[_ <: PipelineStage] = {
 
-    val tokenizer = new Tokenizer()
-      .setInputCols(inputCol)
-      .setOutputCol("tokens_" + identifier)
-    //timer
+    val (documentAssemblerOpt: Option[DocumentAssembler], tokenizer: Tokenizer) = needsDocAssembl match {
+      case true =>
+        val documentAssembler: DocumentAssembler = new DocumentAssembler()
+          .setInputCol(inputCol)
+          .setOutputCol("document_" + identifier)
+          .setCleanupMode("disabled")
+
+        val tokenizer = new Tokenizer()
+          .setInputCols(documentAssembler.getOutputCol)
+          .setOutputCol("tokens_" + identifier)
+        (Option(documentAssembler), tokenizer)
+      case false =>
+        val tokenizer = new Tokenizer()
+          .setInputCols(inputCol)
+          .setOutputCol("tokens_" + identifier)
+        (None, tokenizer)
+    }
+
     val nGramCustomGenerator = new NGramCustomGenerator()
       .setInputCols(tokenizer.getOutputCol)
       .setOutputCol("ngrams_" + identifier)
       .setN(3)
-      .setNGramMinimum(1) //TODO from 1 or 3?
+      .setNGramMinimum(1) //TODO from 1 or 3? ngrams in evaluation
 
     val finisher = new Finisher()
       .setInputCols(nGramCustomGenerator.getOutputCol)
@@ -82,7 +96,10 @@ object CosineSimilarityPipelines {
       .setInputCol(finisher.getOutputCols.head)
       .setOutputCol("vectorizedCount_" + identifier)
 
-    Array(tokenizer, nGramCustomGenerator, finisher, countVector)
+    documentAssemblerOpt match {
+      case Some(documentAssembler) => Array(documentAssembler, tokenizer, nGramCustomGenerator, finisher, countVector)
+      case None => Array(tokenizer, nGramCustomGenerator, finisher, countVector)
+    }
   }
 
   def getPredictionStages(n: Int = 3): Array[_ <: PipelineStage] = {

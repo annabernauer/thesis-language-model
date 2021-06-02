@@ -100,9 +100,9 @@ object CosineExecutable {
 
         val referenceProcessedDf: DataFrame = processReferenceData(predictionDf)                                      //remove new lines from reference, can't be removed before
                                                                                                                         //because they are needed for prediction
-        val vectorizedData = CosineSimilarity.vectorizeData(referenceProcessedDf, "mergedPrediction", "referenceWithoutNewLines").cache()
+        val vectorizedData = CosineSimilarity.vectorizeData(referenceProcessedDf, "mergedPrediction", "referenceWithoutNewLines", needsDocAssembl = false).cache()
 
-        val (cosineValues, crossfoldAverage) = CosineSimilarity.calculateCosineValues(vectorizedData, "mergedPrediction", "referenceWithoutNewLines")
+        val (cosineValues, crossfoldAverage) = CosineSimilarity.calculateCosineValues(vectorizedData, "mergedPrediction", "referenceWithoutNewLines", spark)
 
         println(s"crossfoldAverage = $crossfoldAverage")
 

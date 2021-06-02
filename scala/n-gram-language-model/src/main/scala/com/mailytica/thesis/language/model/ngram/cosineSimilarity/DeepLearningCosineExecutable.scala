@@ -1,10 +1,7 @@
 package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 
-import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineExecutable.n
-import com.mailytica.thesis.language.model.ngram.cosineSimilarity.CosineSimilarity.vectorizeData
-import com.mailytica.thesis.language.model.ngram.pipelines.textSplittingDemo.TextSplitting.sparkSession
 import com.mailytica.thesis.language.model.util.Utility.{printToFile, srcName}
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.nio.charset.{Charset, CodingErrorAction}
 import scala.collection.immutable
@@ -13,15 +10,25 @@ import java.io.{BufferedReader, File, FileInputStream, InputStreamReader}
 
 object DeepLearningCosineExecutable {
 
+  val sparkSession: SparkSession = SparkSession
+    .builder
+    .config("spark.driver.maxResultSize", "5g")
+    .config("spark.driver.memory", "12g")
+    .config("spark.sql.codegen.wholeStage", "false") // deactivated as the compiled grows to big (exception)
+    .master(s"local[3]") //threads = 6
+    .getOrCreate()
+
   val SEED_REGEX = "(?<=<SEED>)(.*?)(?=<SEED_END>)".r()
   val REFERENCE_REGEX = "(?<=<REFERENCE>)(.*?)(?=<REFERENCE_END>)".r()
   val GENERATED_REGEX = "(?<=<GENERATED>)(.*?)(?=<GENERATED_END>)".r()
 
+  val n = 5
+
   val dirCrossfoldName = s"${srcName}_n_${n}"
   val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
 
-  def main(args: Array[String]): Unit = {
 
+  def main(args: Array[String]): Unit = {
     val reader = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/resources/sentencePrediction/deepLearningGeneratedTexts/messagesSmall_n_5_emb_100_epo_20/messagesSmall_n_5_fold_0/generated_texts.txt"), "Cp1252"))
     val lines: Seq[String] = Stream.continually(reader.readLine()).takeWhile(_ != null)
     lines.foreach(println)
@@ -38,25 +45,21 @@ object DeepLearningCosineExecutable {
 
     import sparkSession.implicits._
 
-    val someDF = Seq(
-      (8, "bat"),
-      (64, "mouse"),
-      (-27, "horse")
-    ).toDF("number", "word")
+    val data = seperatedLines.map(sentenceResult => (sentenceResult.seed, sentenceResult.reference, sentenceResult.generated)).toDF("seeds", "reference", "generated")
 
-    someDF.show()
+    val vectorizedData = CosineSimilarity.vectorizeData(data, "generated", "reference", needsDocAssembl = true)
 
-    val data = seperatedLines.map(sentenceResult => (sentenceResult.seed, sentenceResult.reference, sentenceResult.seed)).toDF("seeds", "reference", "generated")
-    data.show()
-
-    val vectorizedData = CosineSimilarity.vectorizeData(data, "generated", "reference")
-
-    val (cosineValues, crossfoldAverage) = CosineSimilarity.calculateCosineValues(vectorizedData, "mergedPrediction", "referenceWithoutNewLines")
+    val (cosineValues, crossfoldAverage) = CosineSimilarity.calculateCosineValues(vectorizedData, "generated", "reference", sparkSession)
 
     println(s"crossfoldAverage = $crossfoldAverage")
 
     //    printToFile(new File(s"${specificDirectory}/${dirCrossfoldName}_fold_${fold}/cosineValues")) { p =>
-    printToFile(new File(s"${specificDirectory}/${dirCrossfoldName}_fold_0/cosineValues_deep_learning")) { p =>
+
+    val dir = new File(s"${specificDirectory}/${dirCrossfoldName}_fold_0")
+    if (!dir.exists) {
+      dir.mkdirs
+    }
+    printToFile(new File(dir.getPath + "/cosineValues_deep_learning")) { p =>
       cosineValues.foreach(p.println)
       p.println(s"crossfoldAverage = $crossfoldAverage")
     }
