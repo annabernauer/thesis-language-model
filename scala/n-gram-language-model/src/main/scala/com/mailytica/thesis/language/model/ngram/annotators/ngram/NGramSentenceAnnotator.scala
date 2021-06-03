@@ -3,7 +3,7 @@ package com.mailytica.thesis.language.model.ngram.annotators.ngram
 import com.codahale.metrics.Timer
 import com.johnsnowlabs.nlp.AnnotatorApproach
 import com.johnsnowlabs.nlp.AnnotatorType.TOKEN
-import com.mailytica.thesis.language.model.ngram.Timer.{ngramSentenceTimerTrain, ngramTimerTrain, stopwatch}
+import com.mailytica.thesis.language.model.ngram.Timer.{ngramSentenceTimerTrain, ngramTimerTrain}
 import org.apache.commons.lang.time.StopWatch
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.param.Param
@@ -27,7 +27,7 @@ class NGramSentenceAnnotator (override val uid: String) extends AnnotatorApproac
   def this() = this(Identifiable.randomUID("NGRAM_SENTENCES"))
 
   override def train(dataset: Dataset[_], recursivePipeline: Option[PipelineModel]): NGramSentenceAnnotatorModel = {
-
+    val stopwatch = new StopWatch
     stopwatch.reset()
     stopwatch.start()
 

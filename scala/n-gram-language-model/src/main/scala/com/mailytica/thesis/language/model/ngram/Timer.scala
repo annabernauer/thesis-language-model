@@ -1,13 +1,11 @@
 package com.mailytica.thesis.language.model.ngram
 
-import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Timer}
-import org.apache.commons.lang.time.StopWatch
+import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Slf4jReporter, Timer}
 
 import java.util.concurrent.TimeUnit
 
 object Timer {
 
-  val stopwatch = new StopWatch
   val metricRegistry = new MetricRegistry()
   val ngramTimerTrain: Timer = metricRegistry.timer("NGramAnnotatorModel_train")
   val ngramSentenceTimerTrain: Timer = metricRegistry.timer("NGramSentenceAnnotator_train")
@@ -19,11 +17,11 @@ object Timer {
   val cosineDotProduct: Timer = metricRegistry.timer("CosineExecutable_dotproduct")
   val nGramGeneratorTimer: Timer = metricRegistry.timer("NGramCustomGenerator_annotate")
 
-  val consoleReporter: ConsoleReporter = ConsoleReporter
+  val slf4jReporter = Slf4jReporter
     .forRegistry(metricRegistry)
     .convertRatesTo(TimeUnit.SECONDS)
     .convertDurationsTo(TimeUnit.MILLISECONDS)
-//    .withLoggingLevel(ConsoleReporter.LoggingLevel.DEBUG)
+    .withLoggingLevel(Slf4jReporter.LoggingLevel.TRACE)
     .build()
 
 }

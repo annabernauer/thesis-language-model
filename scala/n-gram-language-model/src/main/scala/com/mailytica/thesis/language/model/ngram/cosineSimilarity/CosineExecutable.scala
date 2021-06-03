@@ -1,20 +1,27 @@
 package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 
+import com.codahale.metrics.MetricRegistry
 import com.johnsnowlabs.nlp.util.io.ResourceHelper.spark.sqlContext
-import com.mailytica.thesis.language.model.ngram.Timer.consoleReporter
+import com.mailytica.thesis.language.model.ngram.Timer.{slf4jReporter}
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.pipelines.CosineSimilarityPipelines.{getPredictionStages, getPreprocessStages, getReferenceStages}
 import com.mailytica.thesis.language.model.util.Utility.{printToFile, srcName}
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang.time.StopWatch
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.slf4j.LoggerFactory
 
 import java.io.{File, FileOutputStream, PrintStream}
 import java.util.concurrent.TimeUnit
+import scala.collection.parallel.mutable.ParArray
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
+import scala.collection.parallel._
 
 object CosineExecutable {
+
+  val logger = LoggerFactory.getLogger(this.getClass)
 
   val REGEX_PUNCTUATION: Regex = "(\\.|\\!|\\?|\\,|\\:)$".r
   val n = 6
@@ -23,7 +30,7 @@ object CosineExecutable {
   val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
 
   if (specificDirectory.exists()) {
-    println(s"Directory ${dirCrossfoldName} already exists. Do you want to overwrite it? [y|n]")
+    logger.info(s"Directory ${dirCrossfoldName} already exists. Do you want to overwrite it? [y|n]")
     val input: String = readLine()
     input.charAt(0) match {
       case 'y' => FileUtils.deleteQuietly(specificDirectory)
@@ -31,17 +38,20 @@ object CosineExecutable {
     }
   }
 
-  consoleReporter.start(1, TimeUnit.HOURS)
+  slf4jReporter.start(5, TimeUnit.MINUTES)
 
   val spark: SparkSession = SparkSession
     .builder
     .config("spark.driver.maxResultSize", "5g")
     .config("spark.driver.memory", "12g")
     .config("spark.sql.codegen.wholeStage", "false") // deactivated as the compiled grows to big (exception)
-    .master(s"local[6]") //threads = 6
+    .master(s"local[10]") //threads = 6
     .getOrCreate()
 
   def main(args: Array[String]): Unit = {
+
+    logger.info(s"\nn = $n")
+    logger.info(s"srcFile = $srcName")
 
     redirectConsoleLog()
 
@@ -62,12 +72,18 @@ object CosineExecutable {
     val fractionPerSplit = Array.fill(10)(fraction)
     val splitArray: Array[Dataset[Row]] = df.randomSplit(fractionPerSplit)
 
-    //    val allCrossFoldValues: Array[MetadataTypes] =
-    val cosineCrossfoldAverages: Array[Double] = splitArray
-//      .take(4)
+    val numOfThreads = 2
+    val parColl = splitArray
+      //      .take(4)
       .zipWithIndex
+      .par
+
+    parColl.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numOfThreads))
+
+    val cosineCrossfoldAverages: ParArray[Double] =
+      parColl
       .map { case (testData, fold) =>
-        println("#################### index " + fold)
+        logger.info("#################### index " + fold)
 
         val trainingData: DataFrame = splitArray
           .diff(Array(testData)) //remove testData
@@ -90,19 +106,22 @@ object CosineExecutable {
 
         val (cosineValues, crossfoldAverage) = CosineSimilarity.calculateCosineValues(vectorizedData, "mergedPrediction", "referenceWithoutNewLines", spark)
 
-        println(s"crossfoldAverage = $crossfoldAverage")
+        logger.debug(s"fold = $fold crossfoldAverage = $crossfoldAverage")
 
         printToFile(new File(s"${specificDirectory}/${dirCrossfoldName}_fold_${fold}/cosineValues")) { p =>
+          p.println(s"fold = $fold")
           cosineValues.foreach(p.println)
-          p.println(s"crossfoldAverage = $crossfoldAverage")
+          p.println(s"fold = $fold crossfoldAverage = $crossfoldAverage")
         }
 
         crossfoldAverage
       }
 
     val totalCosineAvg = cosineCrossfoldAverages.sum / cosineCrossfoldAverages.length
-    println(s"n = $n \ntotalCosineAvg = $totalCosineAvg")
-    println(s"srcFile = $srcName")
+    logger.info("ALL CROSSFOLD AVERAGES")
+    cosineCrossfoldAverages.foreach(foldAverage => logger.info(s"foldAvg = $foldAverage"))
+    logger.info(s"\nn = $n \ntotalCosineAvg = $totalCosineAvg")
+    logger.info(s"srcFile = $srcName")
   }
 
 
@@ -148,7 +167,7 @@ object CosineExecutable {
       .option("header", "true")
       .save(testDataFile.getPath)
 
-    println("INFO: Preprocessed data is saved")
+    logger.info(s"INFO: Preprocessed data is saved, fold = $fold")
 //    trainingData
 //      .toDF("seeds")
 //      .write
@@ -172,7 +191,7 @@ object CosineExecutable {
       .option("header", "true")
       .save(dataFile.getPath)
 
-    println("INFO: Preprocessed data is saved")
+    logger.info(s"INFO: Data is saved, fold = $fold")
   }
 
   def redirectConsoleLog() = {

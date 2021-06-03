@@ -1,6 +1,6 @@
 package com.mailytica.thesis.language.model.ngram.cosineSimilarity
 
-import com.mailytica.thesis.language.model.ngram.Timer.{cosineDotProduct, cosineNormASqurt, cosineNormBSqurt, cosineSimilarityTimer, stopwatch}
+import com.mailytica.thesis.language.model.ngram.Timer.{cosineDotProduct, cosineNormASqurt, cosineNormBSqurt, cosineSimilarityTimer}
 import com.mailytica.thesis.language.model.ngram.cosineSimilarity.pipelines.CosineSimilarityPipelines.getVectorizerStages
 import org.apache.commons.lang.time.StopWatch
 import org.apache.spark.ml.{Pipeline, PipelineModel}
@@ -8,6 +8,7 @@ import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}
+import org.slf4j.LoggerFactory
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -15,6 +16,8 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
 object CosineSimilarity {
+
+  val logger = LoggerFactory.getLogger(this.getClass)
 
   def vectorizeData(df: DataFrame, predictionInputCol: String, referenceInputCol: String, needsDocAssembl: Boolean) = {
 
@@ -35,6 +38,7 @@ object CosineSimilarity {
   }
 
   def cosineSimilarity(vectorA: Vector, vectorB: Vector) : Double = {
+    val stopwatch = new StopWatch
     val stopwatch2 = new StopWatch
     stopwatch2.start()
 
@@ -97,7 +101,9 @@ object CosineSimilarity {
 
     import spark.implicits._
 
-    vectorizedData.select("seeds", predictionInputCol, referenceInputCol, "ngrams_reference", "ngrams_prediction", "cosine").show(20,false)
+    if (logger.isTraceEnabled()) {
+      vectorizedData.select("seeds", predictionInputCol, referenceInputCol, "ngrams_reference", "ngrams_prediction", "cosine").show(20, false)
+    }
     //        writeToFile(vectorizedData, fold)
 
     val cosineValues = vectorizedData

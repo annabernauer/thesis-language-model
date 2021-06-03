@@ -1,0 +1,26 @@
+<configuration scan="true" scanPeriod="60 seconds">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd} | %d{HH:mm:ss.SSS} | %-20.20thread | %5p | %-30.30logger{30} | %m%n</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <logger name="com.mailytica.thesis.language.model.ngram.cosineSimilarity" level="TRACE" />
+
+    <logger name="metrics" level="INFO" />
+    <logger name="org.apache.hadoop" level="WARN"/>
+    <logger name="org.apache.spark" level="WARN"/>
+    <logger name="org.apache.spark.ContextCleaner" level="WARN"/>
+    <logger name="org.spark_project.jetty" level="WARN"/>
+    <logger name="org.apache.spark.storage" level="WARN"/>
+    <logger name="org.apache.spark.scheduler" level="ERROR"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    <logger name="org.neo4j" level="WARN" />
+    <logger name="Driver" level="WARN" />
+    <logger name="ConnectionPool" level="WARN" />
+
+    <root level="warn">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

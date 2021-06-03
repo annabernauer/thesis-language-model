@@ -12,8 +12,11 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Dataset
 import com.mailytica.thesis.language.model.util.Utility.{DELIMITER, printToFile, srcName}
+import org.slf4j.LoggerFactory
 
 class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAnnotatorModel] {
+
+  val logger = LoggerFactory.getLogger(this.getClass)
 
   override val inputAnnotatorTypes: Array[String] = Array(TOKEN)
   override val outputAnnotatorType: AnnotatorType = TOKEN
@@ -66,7 +69,7 @@ class NGramAnnotator(override val uid: String) extends AnnotatorApproach[NGramAn
       sequencesMap.keys.foreach(p.println)
     }
 
-    println("INFO: Files were created")
+    logger.info(s"INFO: Files were created $fold")
 
     fold = fold + 1
 

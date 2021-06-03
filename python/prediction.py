@@ -35,7 +35,7 @@ n = 5
 epochs = 20  #30 old value
 embeddings = 100
 src_name = "messagesSmall"
-foldCount = 1
+foldCount = 9
 
 srcName = f"{src_name}_n_{n}"
 
