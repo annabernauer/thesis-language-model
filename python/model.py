@@ -1,6 +1,9 @@
 # %tensorflow_version 2.x
+import logging
 from pathlib import Path
 
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import tensorflow as tf
 import string
 import requests
@@ -30,12 +33,19 @@ class Tee(object):
 
 ########################################### pre-process text ###########################################
 
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
 delimiter = "%&§§&%"
-n = 6
+n = 5
 epochs = 40 #30 old value
 embeddings = 100
 foldCount = 10
-src_name = "messages"
+src_name = "messagesSmall"
+
+logging.info(f"n = {n}, epochs = {epochs}, embeddings = {embeddings}, src_name = {src_name}, foldCount = {foldCount}")
 
 # punctuation = r"""!"#$%&'()*+,-./:;=?@[\]^`{|}~"""
 punctuation = r"""!?.,:;"""
@@ -54,7 +64,7 @@ original = sys.stdout
 sys.stdout = Tee(sys.stdout, f)
 
 for fold in range(foldCount):
-  print(f"fold {fold}\n")
+  logging.info(f"+++++++++++++++++++++++++++++ fold = {fold} +++++++++++++++++++++++++++++")
   foldDir = f"{dirName}_fold_{fold}"
   with open(f'resources/{dirName}/{foldDir}/historiesAndSequences/sequencesKeys.txt', encoding='utf-8') as f:
     lines = [line.rstrip() for line in f]
@@ -110,6 +120,8 @@ for fold in range(foldCount):
   model.save(f'{targetFoldDir}/model.h5')
   # save the tokenizer
   dump(tokenizer, open(f'{targetFoldDir}/tokenizer.pkl', 'wb'))
+
+  logging.info(f"fold {fold} finished, files are saved")
 
 # sys.stdout.close()
 f.close()

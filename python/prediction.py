@@ -1,11 +1,14 @@
 
-from tensorflow.keras.preprocessing.text import Tokenizer
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from keras.models import load_model
+from tensorflow.keras.models import load_model
+import tensorflow as tf
 from pickle import load
 from pathlib import Path
 from pyspark.sql import *
 import glob
+import logging
 
 def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
   text = []
@@ -31,15 +34,34 @@ def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
     i += 1
   return ' '.join(text)
 
+
+
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+spark = SparkSession \
+  .builder \
+  .appName("Python Spark SQL basic example") \
+  .config("spark.some.config.option", "some-value") \
+  .getOrCreate()
+
 n = 5
 epochs = 20  #30 old value
 embeddings = 100
 src_name = "messagesSmall"
 foldCount = 9
 
+logging.info(f"n = {n}, epochs = {epochs}, embeddings = {embeddings}, src_name = {src_name}, foldCount = {foldCount}")
+
 srcName = f"{src_name}_n_{n}"
 
 for fold in range(foldCount):
+
+  logging.info(f"+++++++++++++++++++++++++++++ fold = {fold} +++++++++++++++++++++++++++++")
+
   foldDir = f"{srcName}_fold_{fold}"
   targetFoldDir = f"target/{srcName}_emb_{embeddings}_epo_{epochs}/{foldDir}"
 
@@ -48,12 +70,6 @@ for fold in range(foldCount):
 
   # load the tokenizer
   tokenizer = load(open(f'{targetFoldDir}/tokenizer.pkl', 'rb'))
-
-  spark = SparkSession \
-    .builder \
-    .appName("Python Spark SQL basic example") \
-    .config("spark.some.config.option", "some-value") \
-    .getOrCreate()
 
   df = spark.read.csv(glob.glob(f'resources/{srcName}/{foldDir}/testData/*.csv'), header="true", inferSchema="true")
 
@@ -68,7 +84,7 @@ for fold in range(foldCount):
   reference = [str(row.referenceSentences) for row in df.select("referenceSentences").collect()]
 
   seedsWithReference = list(zip(seeds, reference))
-  [print(x) for x in seedsWithReference]
+  # [print(x) for x in seedsWithReference]
 
   ############
   seedsTest = (
@@ -82,8 +98,10 @@ for fold in range(foldCount):
     "<SENTENCE_START> hiermit bedanke ich mich für Ihre Bestellung. <SENTENCE_END>"
   )
   seedsWithReference = list(zip(seedsTest, referenceTest))
-  [print(x) for x in seedsWithReference]
+  # [print(x) for x in seedsWithReference]
   ###########
+
+  logging.info(f"seedsWIthReference: {seedsWithReference[0][0]}; {seedsWithReference[0][1]}")
 
 
 # df.rdd.map()
@@ -105,17 +123,20 @@ for fold in range(foldCount):
 
   for seed in seedsWithReference:
     generated_text = generate_text_seq(model, tokenizer, x_seq_length, seed[0], 40)
-    print(f"{seed[0]}, {seed[1]}, {generated_text}")
+    # print(f"{seed[0]}, {seed[1]}, {generated_text}")
     generated_texts.append((seed[0], seed[1], generated_text))
 
-  print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-  [print(text) for text in generated_texts]
+  # print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  # [print(text) for text in generated_texts]
 
   Path("target/").mkdir(parents=True, exist_ok=True)
 
+  logging.info(f"<SEED> {generated_texts[0][0]} <SEED_END> <REFERENCE> {generated_texts[0][1]} <REFERENCE_END> <GENERATED> {generated_texts[0][0]} {generated_texts[0][2]} <GENERATED_END>")
   f = open(f"{targetFoldDir}/generated_texts.txt", "w")
   for text in generated_texts:
       f.write(f"<SEED> {text[0]} <SEED_END> <REFERENCE> {text[1]} <REFERENCE_END> <GENERATED> {text[0]} {text[2]} <GENERATED_END>\n")
       # f.write(f"<SEED> {text[0]} <SEED_END>\n")
   f.close()
+
+  logging.info(f"fold {fold} finished, file is saved")
 
