@@ -40,10 +40,10 @@ logging.basicConfig(
 
 delimiter = "%&§§&%"
 n = 5
-epochs = 40 #30 old value
+epochs = 25 #30 old value
 embeddings = 100
 foldCount = 10
-src_name = "messagesSmall"
+src_name = "messages"
 
 logging.info(f"n = {n}, epochs = {epochs}, embeddings = {embeddings}, src_name = {src_name}, foldCount = {foldCount}")
 
