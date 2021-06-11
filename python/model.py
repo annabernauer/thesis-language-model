@@ -79,7 +79,7 @@ for fold in range(foldCount):
   lines = [pad_punctuation(s) for s in lines]
   # [print(f"{len(x)} {x}") for x in lines]
 
-  tokenizer = Tokenizer(filters='')
+  tokenizer = Tokenizer(filters='', lower=False)
   tokenizer.fit_on_texts(lines)
   sequences = tokenizer.texts_to_sequences(lines)                         #transforms each line of words to a sequence of integers
 
