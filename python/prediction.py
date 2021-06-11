@@ -28,8 +28,7 @@ def generate_text_seq(model, tokenizer, text_seq_length, seed_text, n_words):
         break
     seed_text = seed_text + ' ' + predicted_word
     text.append(predicted_word)
-    if predicted_word == "<SENTENCE_END>":
-      print("in Sentence end\n")
+    if predicted_word == "<SENTENCE_END>"or predicted_word == "<sentence_end>":
       break
     i += 1
   return ' '.join(text)
@@ -49,10 +48,10 @@ spark = SparkSession \
   .getOrCreate()
 
 n = 5
-epochs = 20  #30 old value
+epochs = 25  #30 old value
 embeddings = 100
-src_name = "messagesSmall"
-foldCount = 9
+src_name = "messages"
+foldCount = 10
 
 logging.info(f"n = {n}, epochs = {epochs}, embeddings = {embeddings}, src_name = {src_name}, foldCount = {foldCount}")
 
@@ -86,20 +85,20 @@ for fold in range(foldCount):
   seedsWithReference = list(zip(seeds, reference))
   # [print(x) for x in seedsWithReference]
 
-  ############
-  seedsTest = (
-  "<SENTENCE_START> vielen Dank für",
-  "<SENTENCE_START> Sehr geehrte Frau",
-  "<SENTENCE_START> hiermit bedanke ich")
-
-  referenceTest = (
-    "<SENTENCE_START> vielen Dank für Ihre Nachfrage hinsichtlich des Lieferdatums Ihrer Bestellung. <SENTENCE_END>",
-    "<SENTENCE_START> Sehr geehrte Frau Hilgers, <SENTENCE_END>",
-    "<SENTENCE_START> hiermit bedanke ich mich für Ihre Bestellung. <SENTENCE_END>"
-  )
-  seedsWithReference = list(zip(seedsTest, referenceTest))
-  # [print(x) for x in seedsWithReference]
-  ###########
+  # ############
+  # seedsTest = (
+  # "<SENTENCE_START> vielen Dank für",
+  # "<SENTENCE_START> Sehr geehrte Frau",
+  # "<SENTENCE_START> hiermit bedanke ich")
+  #
+  # referenceTest = (
+  #   "<SENTENCE_START> vielen Dank für Ihre Nachfrage hinsichtlich des Lieferdatums Ihrer Bestellung. <SENTENCE_END>",
+  #   "<SENTENCE_START> Sehr geehrte Frau Hilgers, <SENTENCE_END>",
+  #   "<SENTENCE_START> hiermit bedanke ich mich für Ihre Bestellung. <SENTENCE_END>"
+  # )
+  # seedsWithReference = list(zip(seedsTest, referenceTest))
+  # # [print(x) for x in seedsWithReference]
+  # ###########
 
   logging.info(f"seedsWIthReference: {seedsWithReference[0][0]}; {seedsWithReference[0][1]}")
 
@@ -121,10 +120,13 @@ for fold in range(foldCount):
 
   generated_texts = []
 
+  count = 0
   for seed in seedsWithReference:
     generated_text = generate_text_seq(model, tokenizer, x_seq_length, seed[0], 40)
-    # print(f"{seed[0]}, {seed[1]}, {generated_text}")
     generated_texts.append((seed[0], seed[1], generated_text))
+    if (count % 50) == 0:
+      logging.info(f"count: {count}; {seed[0]}, {seed[1]}, {generated_text}")
+    count = count + 1
 
   # print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   # [print(text) for text in generated_texts]
