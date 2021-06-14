@@ -24,7 +24,7 @@ object CosineExecutable {
   val logger = LoggerFactory.getLogger(this.getClass)
 
   val REGEX_PUNCTUATION: Regex = "(\\.|\\!|\\?|\\,|\\:)$".r
-  val n = 4
+  val n = 3
 
   val dirCrossfoldName = s"${srcName}_n_${n}"
   val specificDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
@@ -50,7 +50,7 @@ object CosineExecutable {
 
   def main(args: Array[String]): Unit = {
 
-    logger.info(s"\nn = $n")
+    logger.info(s"n = $n")
     logger.info(s"srcFile = $srcName")
 
     redirectConsoleLog()

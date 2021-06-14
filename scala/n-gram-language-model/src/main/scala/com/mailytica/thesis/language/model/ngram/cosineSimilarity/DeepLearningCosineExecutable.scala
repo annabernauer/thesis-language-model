@@ -27,13 +27,17 @@ object DeepLearningCosineExecutable {
 
   val n = 5
   val emb = 100
-  val epo = 20
-  val srcName = "messagesSmall"
+  val epo = 25
+  val srcName = "messages"
 
   val dirCrossfoldName = s"${srcName}_n_${n}"
   val specificTargetDirectory = new File(s"target/crossFoldValues/$dirCrossfoldName")
 
   def main(args: Array[String]): Unit = {
+
+    logger.info("in DeepLearningCosineExecutable")
+    logger.info(s"n = $n, emb = $emb, epo = $epo")
+    logger.info(s"srcFile = $srcName")
 
     val numOfThreads = 2
     val parArray = Array.range(0, 9).par
