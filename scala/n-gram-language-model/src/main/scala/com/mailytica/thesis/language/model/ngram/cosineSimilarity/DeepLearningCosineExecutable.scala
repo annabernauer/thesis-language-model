@@ -25,7 +25,7 @@ object DeepLearningCosineExecutable {
   val REFERENCE_REGEX = "(?<=<REFERENCE>)(.*?)(?=<REFERENCE_END>)".r()
   val GENERATED_REGEX = "(?<=<GENERATED>)(.*?)(?=<GENERATED_END>)".r()
 
-  val n = 5
+  val n = 6
   val emb = 100
   val epo = 25
   val srcName = "messages"
@@ -40,7 +40,7 @@ object DeepLearningCosineExecutable {
     logger.info(s"srcFile = $srcName")
 
     val numOfThreads = 2
-    val parArray = Array.range(0, 9).par
+    val parArray = Array.range(0, 10).par
     parArray.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numOfThreads))
 
     val cosineCrossfoldAverages: ParArray[Double] = parArray.map {
