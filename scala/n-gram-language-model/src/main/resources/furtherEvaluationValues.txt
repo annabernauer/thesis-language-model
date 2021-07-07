@@ -1,0 +1,42 @@
+#########################
+ngram = 3
+median = Median(0.6389151433378878)
+minValue = MinValue(0.005835274907677911)
+maxValue = MaxValue(0.9784490979926537)
+stdDeviation = StandardDeviation(54.01135191341442)
+#########################
+ngram = 4
+median = Median(0.8908708063747479)
+minValue = MinValue(0.008636747120424072)
+maxValue = MaxValue(0.9849392180017482)
+stdDeviation = StandardDeviation(44.85522390530858)
+#########################
+ngram = 5
+median = Median(0.9237604307034013)
+minValue = MinValue(0.011835944068074344)
+maxValue = MaxValue(0.9849541874254879)
+stdDeviation = StandardDeviation(39.64159795640472)
+#########################
+ngram = 6
+median = Median(0.9491095914562445)
+minValue = MinValue(0.015323627879987747)
+maxValue = MaxValue(0.9865010503547694)
+stdDeviation = StandardDeviation(40.121601726731384)
+#########################
+ngram = 7
+median = Median(0.9525793444156803)
+minValue = MinValue(0.019618800220277018)
+maxValue = MaxValue(0.9859574863632623)
+stdDeviation = StandardDeviation(40.09996625615797)
+#########################
+ngram = 8
+median = Median(0.9601302410323387)
+minValue = MinValue(0.023771818260694223)
+maxValue = MaxValue(0.9865010503547692)
+stdDeviation = StandardDeviation(38.78574207659087)
+#########################
+ngram = 9
+median = Median(0.9630715316464042)
+minValue = MinValue(0.02760948655517706)
+maxValue = MaxValue(0.9865618419861122)
+stdDeviation = StandardDeviation(38.932029195164695)
