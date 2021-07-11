@@ -1,0 +1,7 @@
+#########################
+ngram = 7
+median = Median(0.5723115214771618)
+minValue = MinValue(0.20703708906884155)
+maxValue = MaxValue(1.0000000000000002)
+stdDeviation = StandardDeviation(29.691535054782793)
+avg = Avg(0.6281352346170209)
